@@ -1,5 +1,4 @@
-import { Briefcase, GraduationCap } from "lucide-react";
-import { motion } from "motion/react";
+import { useEffect, useRef } from "react";
 
 interface TimelineItem {
   id: number;
@@ -9,148 +8,164 @@ interface TimelineItem {
   description: string;
 }
 
-const EXPERIENCE: TimelineItem[] = [
+const WORK_EXPERIENCE: TimelineItem[] = [
   {
     id: 1,
     title: "Senior WordPress Developer",
-    org: "Freelance / Fiverr Pro",
-    period: "2022 – Present",
+    org: "Freelance / Self-employed",
+    period: "2019 – Present",
     description:
-      "Leading complex WordPress projects — custom themes, WooCommerce builds, malware remediation, and performance optimization for global clients with 5-star ratings.",
+      "Delivering custom WordPress solutions to international clients — high-performance themes, WooCommerce stores, security hardening, and AI automation integrations.",
   },
   {
     id: 2,
     title: "Frontend Developer",
-    org: "DigiTech Solutions Ltd.",
-    period: "2020 – 2022",
+    org: "Web Agency Bangladesh",
+    period: "2021 – 2023",
     description:
-      "Built pixel-perfect landing pages and interactive dashboards for SaaS products using modern HTML/CSS/JS with a focus on cross-browser compatibility and accessibility.",
+      "Built responsive frontend interfaces and WordPress themes for 50+ client projects across e-commerce, corporate, and portfolio verticals.",
   },
   {
     id: 3,
-    title: "Junior Web Developer",
-    org: "WebCraft Agency",
-    period: "2018 – 2020",
+    title: "WP Support Specialist",
+    org: "Remote Tech Support Co.",
+    period: "2020 – 2022",
     description:
-      "Developed and maintained client websites on WordPress, handled theme customizations, plugin integrations, and basic SEO optimization tasks.",
+      "Handled malware removal, plugin conflict resolution, speed optimization, and emergency bug fixes for a diverse client base. 99%+ satisfaction rating.",
   },
 ];
 
 const EDUCATION: TimelineItem[] = [
   {
     id: 1,
-    title: "BSc in Computer Science",
-    org: "University of Dhaka",
-    period: "2016 – 2020",
+    title: "B.Sc. in Computer Science & IT",
+    org: "University of Bangladesh",
+    period: "2015 – 2019",
     description:
-      "Focused on software engineering, algorithms, and web technologies. Final-year project: a full-stack e-commerce platform with AI-based recommendation engine.",
+      "Major in Computer Science. Coursework in data structures, algorithms, web technologies, databases, and software engineering.",
   },
   {
     id: 2,
-    title: "Web Development Certification",
-    org: "Coursera — Meta Front-End Developer",
-    period: "2018",
+    title: "Full-Stack Web Dev Bootcamp",
+    org: "Online (Udemy / Coursera)",
+    period: "2019",
     description:
-      "Completed professional certification covering React, responsive design, version control with Git, and UX fundamentals with hands-on capstone projects.",
+      "Intensive frontend + WordPress development program covering React, TypeScript, modern CSS, and WordPress plugin development.",
   },
   {
     id: 3,
-    title: "Cybersecurity Fundamentals",
-    org: "Google / Coursera",
-    period: "2021",
+    title: "WordPress Security Certification",
+    org: "WPSec Academy",
+    period: "2020",
     description:
-      "Earned credential covering network security, vulnerability assessment, incident response, and practical WordPress hardening techniques.",
+      "Certified training in WordPress security hardening, malware removal, firewall configuration, and incident response procedures.",
   },
 ];
 
-const dotVariants = {
-  hidden: { scale: 0, opacity: 0 },
-  visible: (i: number) => ({
-    scale: 1,
-    opacity: 1,
-    transition: {
-      delay: i * 0.15,
-      duration: 0.4,
-      type: "spring" as const,
-      stiffness: 200,
-    },
-  }),
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, x: -24 },
-  visible: (i: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: { delay: i * 0.15, duration: 0.5 },
-  }),
-};
-
-const itemVariantsRight = {
-  hidden: { opacity: 0, x: 24 },
-  visible: (i: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: { delay: i * 0.15, duration: 0.5 },
-  }),
-};
+function useRevealList(
+  containerRef: React.RefObject<Element | null>,
+  itemSelector: string,
+) {
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const items = Array.from(container.querySelectorAll(itemSelector));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const el = entry.target as HTMLElement;
+            const delay = Number.parseInt(el.dataset.delay ?? "0", 10);
+            setTimeout(() => el.classList.add("revealed"), delay);
+            observer.unobserve(el);
+          }
+        }
+      },
+      { threshold: 0.1 },
+    );
+    for (const el of items) observer.observe(el);
+    return () => observer.disconnect();
+  }, [containerRef, itemSelector]);
+}
 
 function TimelineColumn({
   items,
-  direction,
+  accent,
+  dotGlow,
 }: {
   items: TimelineItem[];
-  direction: "left" | "right";
+  accent: "gold" | "cyan";
+  dotGlow: string;
 }) {
-  const vars = direction === "left" ? itemVariants : itemVariantsRight;
+  const containerRef = useRef<HTMLDivElement>(null);
+  useRevealList(
+    containerRef as React.RefObject<Element>,
+    "[data-timeline-item]",
+  );
+
+  const dotColor =
+    accent === "gold" ? "oklch(0.72 0.18 50)" : "oklch(0.72 0.22 210)";
+  const lineColor =
+    accent === "gold"
+      ? "linear-gradient(to bottom, oklch(0.72 0.18 50/0.9), oklch(0.72 0.18 50/0.3))"
+      : "linear-gradient(to bottom, oklch(0.72 0.22 210/0.9), oklch(0.72 0.22 210/0.3))";
+  const orgColorClass = accent === "gold" ? "text-primary" : "text-accent";
+
   return (
-    <div className="relative pl-8">
-      {/* Vertical line */}
+    <div ref={containerRef} className="relative pl-7">
+      {/* Vertical accent line */}
       <div
-        className="absolute left-3 top-3 bottom-3 w-px"
-        style={{
-          background:
-            "linear-gradient(to bottom, oklch(var(--primary)/0.8), oklch(var(--accent)/0.8), oklch(var(--primary)/0.2))",
-        }}
+        className="absolute left-[11px] top-4 bottom-4 w-0.5 rounded-full"
+        style={{ background: lineColor }}
       />
 
       {items.map((item, i) => (
-        <div key={item.id} className="relative mb-10 last:mb-0">
-          {/* Glowing dot */}
-          <motion.div
-            custom={i}
-            variants={dotVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="absolute -left-5 top-1 w-4 h-4 rounded-full border-2 border-primary bg-background"
+        <div
+          key={item.id}
+          className="relative mb-8 last:mb-0 reveal-fade-up"
+          data-timeline-item
+          data-delay={i * 120}
+        >
+          {/* Glow dot */}
+          <div
+            className="timeline-dot absolute -left-[1px] top-5 w-3 h-3 rounded-full z-10 transition-smooth"
             style={{
-              boxShadow:
-                "0 0 10px 2px oklch(var(--primary)/0.6), 0 0 4px 1px oklch(var(--accent)/0.4)",
+              background: dotColor,
+              boxShadow: dotGlow,
             }}
           />
 
-          <motion.div
-            custom={i}
-            variants={vars}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="bg-card rounded-xl border border-border/40 p-5 hover:border-primary/40 transition-smooth shadow-elevated"
-            style={{ cursor: "default" }}
-            whileHover={{ borderColor: "oklch(var(--primary)/0.5)" }}
+          {/* Card */}
+          <div
+            className="bg-card rounded-xl border border-border/40 p-4 transition-smooth group hover:border-border/70"
+            style={{
+              transition:
+                "transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.style.transform = "translateX(4px)";
+              el.style.boxShadow = `0 4px 20px -8px ${dotColor}55`;
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.style.transform = "translateX(0)";
+              el.style.boxShadow = "none";
+            }}
           >
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1 block">
+            <span className="block text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">
               {item.period}
             </span>
-            <h3 className="font-display font-semibold text-sm text-foreground mb-0.5 leading-snug">
+            <h3 className="font-display font-semibold text-sm text-foreground leading-snug mb-0.5">
               {item.title}
             </h3>
-            <p className="text-xs text-primary font-mono mb-2">{item.org}</p>
+            <p className={`text-xs font-mono mb-2 ${orgColorClass}`}>
+              {item.org}
+            </p>
             <p className="text-muted-foreground text-xs leading-relaxed">
               {item.description}
             </p>
-          </motion.div>
+          </div>
         </div>
       ))}
     </div>
@@ -158,78 +173,110 @@ function TimelineColumn({
 }
 
 export function Experience() {
+  const headingRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = headingRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("revealed");
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section
       id="experience"
-      className="section-pad border-b border-border/30"
+      className="relative section-pad border-b border-border/30 overflow-hidden"
+      style={{ background: "oklch(0.12 0.015 48)" }}
       data-ocid="section-experience"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="mb-12"
-      >
-        <p className="text-muted-foreground font-mono text-xs uppercase tracking-widest mb-2">
-          {"// Career Journey"}
-        </p>
-        <h2 className="section-heading gradient-gold-cyan inline-block">
-          My Experience
-        </h2>
-        <p className="section-subheading max-w-lg">
-          Years of building, learning, and shipping real-world projects across
-          WordPress, frontend engineering, and web security.
-        </p>
-      </motion.div>
+      {/* Background accent */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          background:
+            "radial-gradient(ellipse 50% 40% at 20% 60%, oklch(0.72 0.18 50 / 0.04) 0%, transparent 70%), radial-gradient(ellipse 45% 35% at 80% 30%, oklch(0.72 0.22 210 / 0.04) 0%, transparent 70%)",
+        }}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
-        {/* Experience column */}
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="flex items-center gap-3 mb-8"
+      <div className="relative z-10 max-w-5xl mx-auto">
+        {/* Section header */}
+        <div ref={headingRef} className="reveal-fade-up mb-12">
+          <span
+            className="inline-block px-3 py-1 rounded-full text-[11px] font-mono uppercase tracking-widest mb-3"
+            style={{
+              background: "oklch(0.72 0.18 50 / 0.12)",
+              color: "oklch(0.72 0.18 50)",
+              border: "1px solid oklch(0.72 0.18 50 / 0.3)",
+            }}
           >
-            <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
-              <Briefcase size={16} className="text-primary" />
-            </div>
-            <div>
-              <p className="font-display font-semibold text-foreground text-sm">
-                Work Experience
-              </p>
-              <p className="text-muted-foreground text-xs font-mono">
-                Professional history
-              </p>
-            </div>
-          </motion.div>
-          <TimelineColumn items={EXPERIENCE} direction="left" />
+            My Journey
+          </span>
+          <h2 className="section-heading gradient-gold-cyan inline-block">
+            Experience &amp; Education
+          </h2>
+          <div className="flex items-center gap-2 mt-2">
+            <div
+              className="h-1 w-16 rounded-full"
+              style={{
+                background:
+                  "linear-gradient(90deg, oklch(0.72 0.18 50), oklch(0.72 0.22 210))",
+              }}
+            />
+            <div className="h-px w-24 rounded-full bg-border/50" />
+          </div>
         </div>
 
-        {/* Education column */}
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex items-center gap-3 mb-8"
-          >
-            <div className="w-9 h-9 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center">
-              <GraduationCap size={16} className="text-accent" />
-            </div>
-            <div>
-              <p className="font-display font-semibold text-foreground text-sm">
-                Education
-              </p>
-              <p className="text-muted-foreground text-xs font-mono">
-                Academic background
+        {/* Two-column grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Work Experience */}
+          <div>
+            <div className="flex items-center gap-2 mb-7">
+              <span
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-base"
+                style={{ background: "oklch(0.72 0.18 50 / 0.12)" }}
+              >
+                💼
+              </span>
+              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                Work Experience
               </p>
             </div>
-          </motion.div>
-          <TimelineColumn items={EDUCATION} direction="right" />
+            <TimelineColumn
+              items={WORK_EXPERIENCE}
+              accent="gold"
+              dotGlow="0 0 10px 3px oklch(0.72 0.18 50/0.55), 0 0 4px 1px oklch(0.72 0.18 50/0.35)"
+            />
+          </div>
+
+          {/* Education */}
+          <div>
+            <div className="flex items-center gap-2 mb-7">
+              <span
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-base"
+                style={{ background: "oklch(0.72 0.22 210 / 0.12)" }}
+              >
+                🎓
+              </span>
+              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                Education &amp; Certifications
+              </p>
+            </div>
+            <TimelineColumn
+              items={EDUCATION}
+              accent="cyan"
+              dotGlow="0 0 10px 3px oklch(0.72 0.22 210/0.55), 0 0 4px 1px oklch(0.72 0.22 210/0.35)"
+            />
+          </div>
         </div>
       </div>
     </section>

@@ -89,10 +89,257 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface backendInterface {
+export type Timestamp = bigint;
+export interface DailyContactCount {
+    date: string;
+    count: bigint;
 }
+export interface ContactSubmission {
+    id: ContactId;
+    subject: string;
+    name: string;
+    email: string;
+    message: string;
+    timestamp: Timestamp;
+}
+export type SessionToken = string;
+export type ProjectId = bigint;
+export type LoginResult = {
+    __kind__: "ok";
+    ok: SessionToken;
+} | {
+    __kind__: "err";
+    err: string;
+};
+export type ContactId = bigint;
+export interface Project {
+    id: ProjectId;
+    title: string;
+    imageUrls: Array<string>;
+    createdAt: Timestamp;
+    description: string;
+    category: string;
+}
+export interface DashboardStats {
+    contactsLast30Days: Array<DailyContactCount>;
+    totalContacts: bigint;
+    totalProjects: bigint;
+    projectsByCategory: Array<CategoryProjectCount>;
+}
+export interface CategoryProjectCount {
+    count: bigint;
+    category: string;
+}
+export interface backendInterface {
+    adminLogin(username: string, password: string): Promise<LoginResult>;
+    createProject(token: SessionToken, title: string, description: string, category: string, imageUrls: Array<string>): Promise<Project | null>;
+    deleteContact(token: SessionToken, id: ContactId): Promise<boolean>;
+    deleteProject(token: SessionToken, id: ProjectId): Promise<boolean>;
+    getContactCount(): Promise<bigint>;
+    getContacts(token: SessionToken): Promise<Array<ContactSubmission>>;
+    getDashboardStats(token: SessionToken): Promise<DashboardStats>;
+    getProject(id: ProjectId): Promise<Project | null>;
+    getProjects(): Promise<Array<Project>>;
+    submitContact(name: string, email: string, subject: string, message: string): Promise<ContactSubmission>;
+    updateProject(token: SessionToken, id: ProjectId, title: string, description: string, category: string, imageUrls: Array<string>): Promise<boolean>;
+    validateToken(token: string): Promise<boolean>;
+}
+import type { LoginResult as _LoginResult, Project as _Project, SessionToken as _SessionToken } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
+    async adminLogin(arg0: string, arg1: string): Promise<LoginResult> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.adminLogin(arg0, arg1);
+                return from_candid_LoginResult_n1(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.adminLogin(arg0, arg1);
+            return from_candid_LoginResult_n1(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async createProject(arg0: SessionToken, arg1: string, arg2: string, arg3: string, arg4: Array<string>): Promise<Project | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.createProject(arg0, arg1, arg2, arg3, arg4);
+                return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.createProject(arg0, arg1, arg2, arg3, arg4);
+            return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async deleteContact(arg0: SessionToken, arg1: ContactId): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteContact(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteContact(arg0, arg1);
+            return result;
+        }
+    }
+    async deleteProject(arg0: SessionToken, arg1: ProjectId): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteProject(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteProject(arg0, arg1);
+            return result;
+        }
+    }
+    async getContactCount(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getContactCount();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getContactCount();
+            return result;
+        }
+    }
+    async getContacts(arg0: SessionToken): Promise<Array<ContactSubmission>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getContacts(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getContacts(arg0);
+            return result;
+        }
+    }
+    async getDashboardStats(arg0: SessionToken): Promise<DashboardStats> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getDashboardStats(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getDashboardStats(arg0);
+            return result;
+        }
+    }
+    async getProject(arg0: ProjectId): Promise<Project | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getProject(arg0);
+                return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getProject(arg0);
+            return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getProjects(): Promise<Array<Project>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getProjects();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getProjects();
+            return result;
+        }
+    }
+    async submitContact(arg0: string, arg1: string, arg2: string, arg3: string): Promise<ContactSubmission> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitContact(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitContact(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
+    async updateProject(arg0: SessionToken, arg1: ProjectId, arg2: string, arg3: string, arg4: string, arg5: Array<string>): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateProject(arg0, arg1, arg2, arg3, arg4, arg5);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateProject(arg0, arg1, arg2, arg3, arg4, arg5);
+            return result;
+        }
+    }
+    async validateToken(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.validateToken(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.validateToken(arg0);
+            return result;
+        }
+    }
+}
+function from_candid_LoginResult_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _LoginResult): LoginResult {
+    return from_candid_variant_n2(_uploadFile, _downloadFile, value);
+}
+function from_candid_opt_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Project]): Project | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    ok: _SessionToken;
+} | {
+    err: string;
+}): {
+    __kind__: "ok";
+    ok: SessionToken;
+} | {
+    __kind__: "err";
+    err: string;
+} {
+    return "ok" in value ? {
+        __kind__: "ok",
+        ok: value.ok
+    } : "err" in value ? {
+        __kind__: "err",
+        err: value.err
+    } : value;
 }
 export interface CreateActorOptions {
     agent?: Agent;

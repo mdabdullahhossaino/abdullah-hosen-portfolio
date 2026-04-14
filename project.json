@@ -1,26 +1,24 @@
 {
-  "overview": "A cinematic, dark-themed professional portfolio for Md Abdullah Hosen — Expert WordPress Developer & Frontend Engineer. Features animated hero, skill bars, services grid, project showcase, timeline, and contact form.",
+  "overview": "A dark premium cinematic portfolio website for Abdullah Hosen — Expert WordPress Developer & Frontend Engineer. Features a secret admin panel, project management with image uploads, contact form management with CSV export, animated dashboard charts, and smooth scroll animations.",
   "features": [
-    "Cinematic dark theme with gold/electric blue accents",
-    "Animated hero with particle background and typing effect",
-    "Sticky sidebar profile card (desktop) / top header (mobile)",
-    "Scroll-triggered animated skill progress bars",
-    "Services cards grid with hover effects",
-    "Portfolio project showcase with category filtering",
-    "Vertical experience timeline with stagger animations",
-    "Contact form with validation",
-    "Fully responsive layout",
-    "Smooth scroll navigation with active section highlight"
+    "Secret admin panel at /ridoy with secure login",
+    "Project upload with multiple images per project",
+    "Dynamic public portfolio fed from admin",
+    "Contact form submissions stored and managed in admin",
+    "CSV/Excel export of all contacts",
+    "Email reply via mailto button",
+    "Animated bar chart and donut chart dashboard",
+    "Smooth scroll entrance animations on public site",
+    "Dark premium cinematic design with gold and cyan accents"
   ],
   "category": "portfolio",
   "tags": [
     "portfolio",
     "wordpress",
     "frontend",
-    "developer",
-    "cinematic",
-    "animations",
-    "dark-theme"
+    "admin-panel",
+    "dark-theme",
+    "animations"
   ],
-  "last_updated": "2026-04-13T18:55:12.514Z"
+  "last_updated": "2026-04-14T06:13:03.901Z"
 }

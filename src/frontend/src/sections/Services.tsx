@@ -1,159 +1,181 @@
-import { Bot, Code2, Layout, ShieldCheck, Wrench, Zap } from "lucide-react";
-import { motion } from "motion/react";
-
-// ── Service data ──────────────────────────────────────────────────────────────
+import { useReveal } from "@/hooks/useReveal";
+import { useState } from "react";
 
 const SERVICES = [
   {
     id: "wordpress",
-    icon: Code2,
+    emoji: "🔧",
     title: "Custom WordPress Development",
-    desc: "Crafting bespoke WordPress themes and plugins tailored to your brand. From WooCommerce stores to complex multi-site networks — built for performance.",
+    desc: "Full custom WordPress themes, child themes, and plugin development tailored to your exact business requirements and goals.",
     accentGold: true,
   },
   {
     id: "frontend",
-    icon: Layout,
-    title: "Frontend Design",
-    desc: "Translating design mockups into pixel-perfect, responsive interfaces. Modern HTML5, CSS3, and React-powered experiences that delight users.",
+    emoji: "🎨",
+    title: "Frontend Design & Development",
+    desc: "Modern, responsive frontend interfaces built with React, HTML5, CSS3, and JavaScript for stunning, high-converting user experiences.",
     accentGold: false,
   },
   {
     id: "security",
-    icon: ShieldCheck,
+    emoji: "🛡️",
     title: "Malware Removal & Security",
-    desc: "Comprehensive site auditing, malware scanning and removal, and hardening against future attacks. Keep your site clean and your users protected.",
+    desc: "Complete WordPress security audits, malware scanning and removal, security hardening, and ongoing monitoring for lasting protection.",
     accentGold: true,
   },
   {
     id: "speed",
-    icon: Zap,
-    title: "Speed Optimization",
-    desc: "Achieving sub-2s load times through caching, image optimization, CDN setup, and code minification. Fast sites rank higher and convert better.",
+    emoji: "⚡",
+    title: "Speed & Performance Optimization",
+    desc: "Website speed analysis, Core Web Vitals optimization, caching configuration, CDN setup, and image optimization for blazing-fast load times.",
     accentGold: false,
   },
   {
     id: "bugfix",
-    icon: Wrench,
-    title: "Bug Fixing",
-    desc: "Rapid diagnosis and resolution of WordPress and frontend bugs — from white screens to broken layouts. I fix it right the first time.",
+    emoji: "🔍",
+    title: "Bug Fixing & Maintenance",
+    desc: "Systematic debugging, error resolution, theme/plugin conflict diagnosis and fixes, and ongoing WordPress maintenance packages.",
     accentGold: true,
   },
   {
     id: "ai",
-    icon: Bot,
+    emoji: "🤖",
     title: "AI Automation Integration",
-    desc: "Embedding AI-powered automations into your business workflows — from chatbots to content pipelines — saving hours and driving growth.",
+    desc: "Integrate ChatGPT, OpenAI APIs, and automation workflows into your WordPress site to streamline operations and enhance user experience.",
     accentGold: false,
   },
-];
-
-// ── Service Card ──────────────────────────────────────────────────────────────
+] as const;
 
 interface ServiceCardProps {
-  icon: React.ElementType;
+  id: string;
+  emoji: string;
   title: string;
   desc: string;
   accentGold: boolean;
-  index: number;
+  delay: number;
+  visible: boolean;
 }
 
 function ServiceCard({
-  icon: Icon,
+  id,
+  emoji,
   title,
   desc,
   accentGold,
-  index,
+  delay,
+  visible,
 }: ServiceCardProps) {
-  const goldColor = "oklch(0.72 0.18 50)";
-  const cyanColor = "oklch(0.72 0.22 210)";
-  const activeColor = accentGold ? goldColor : cyanColor;
+  const color = accentGold ? "oklch(0.72 0.18 50)" : "oklch(0.72 0.22 210)";
+  const colorAlpha = (a: number) =>
+    accentGold ? `oklch(0.72 0.18 50 / ${a})` : `oklch(0.72 0.22 210 / ${a})`;
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{
-        duration: 0.6,
-        delay: index * 0.1,
-        ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-      }}
-      whileHover={{ y: -6, scale: 1.02 }}
-      className="relative flex flex-col p-6 rounded-2xl border border-border/30 bg-card/50 backdrop-blur-sm group overflow-hidden cursor-default"
+    <div
+      className="service-card relative flex flex-col p-6 rounded-2xl overflow-hidden cursor-default"
       style={{
-        transition:
-          "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        background: "oklch(0.13 0.016 48)",
+        border: `1px solid ${hovered ? colorAlpha(0.45) : "oklch(0.28 0.018 48 / 0.6)"}`,
+        boxShadow: hovered ? `0 12px 40px -10px ${colorAlpha(0.3)}` : "none",
+        transform: visible
+          ? hovered
+            ? "translateY(-8px)"
+            : "translateY(0)"
+          : "translateY(40px)",
+        opacity: visible ? 1 : 0,
+        transition: `opacity 0.6s ease-out ${delay}ms, transform 0.6s ease-out ${delay}ms, border-color 0.3s ease, box-shadow 0.3s ease`,
       }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget;
-        el.style.boxShadow = `0 12px 40px -10px ${activeColor.replace("oklch", "oklch").replace(")", " / 0.30)")}`;
-        el.style.borderColor = activeColor.replace(")", " / 0.45)");
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget;
-        el.style.boxShadow = "";
-        el.style.borderColor = "";
-      }}
-      data-ocid={`service-card-${SERVICES.find((s) => s.title === title)?.id ?? index}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      data-ocid={`service-card-${id}`}
     >
-      {/* Radial hover glow */}
+      {/* Top gradient accent on hover */}
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none"
+        className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl"
         style={{
-          background: `radial-gradient(ellipse 70% 50% at 50% 0%, ${activeColor.replace(")", " / 0.09)")} 0%, transparent 70%)`,
+          background:
+            "linear-gradient(90deg, oklch(0.72 0.18 50), oklch(0.72 0.22 210))",
+          opacity: hovered ? 1 : 0,
           transition: "opacity 0.3s ease",
         }}
       />
 
-      {/* Icon */}
+      {/* Radial hover glow */}
       <div
-        className="relative z-10 w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-smooth group-hover:scale-110"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          background: `${activeColor.replace(")", " / 0.12)")}`,
-          color: activeColor,
-          boxShadow: `0 0 20px -6px ${activeColor.replace(")", " / 0.25)")}`,
+          background: `radial-gradient(ellipse 70% 50% at 50% 0%, ${colorAlpha(0.09)} 0%, transparent 70%)`,
+          opacity: hovered ? 1 : 0,
+          transition: "opacity 0.3s ease",
+        }}
+      />
+
+      {/* Emoji icon */}
+      <div
+        className="relative z-10 w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-5"
+        style={{
+          background: colorAlpha(0.12),
+          boxShadow: hovered ? `0 0 20px -6px ${colorAlpha(0.4)}` : "none",
+          transition: "box-shadow 0.3s ease, transform 0.3s ease",
+          transform: hovered ? "scale(1.1)" : "scale(1)",
         }}
       >
-        <Icon size={22} />
+        {emoji}
       </div>
 
-      {/* Title */}
       <h3
-        className="relative z-10 font-display font-bold text-lg text-foreground mb-3 group-hover:transition-smooth"
-        style={{ transition: "color 0.25s ease" }}
+        className="relative z-10 font-display font-bold text-lg mb-3"
+        style={{
+          color: hovered ? color : "oklch(0.93 0.008 60)",
+          transition: "color 0.25s ease",
+        }}
       >
         {title}
       </h3>
 
-      {/* Description */}
       <p className="relative z-10 text-muted-foreground text-sm leading-relaxed flex-1">
         {desc}
       </p>
 
-      {/* Bottom accent line */}
+      <a
+        href="#contact"
+        className="relative z-10 inline-flex items-center gap-1 text-sm font-semibold mt-5 font-mono"
+        style={{ color, opacity: 0.85, transition: "opacity 0.2s ease" }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLAnchorElement).style.opacity = "1";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLAnchorElement).style.opacity = "0.85";
+        }}
+        data-ocid={`service-link-${id}`}
+      >
+        Get Started <span aria-hidden="true">→</span>
+      </a>
+
+      {/* Bottom expanding accent line */}
       <div
-        className="relative z-10 h-px w-0 group-hover:w-full mt-5 rounded-full"
+        className="absolute bottom-0 left-0 h-[1px] rounded-full"
         style={{
-          background: `linear-gradient(90deg, ${activeColor}, transparent)`,
+          background: `linear-gradient(90deg, ${color}, transparent)`,
+          width: hovered ? "100%" : "0%",
           transition: "width 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       />
-    </motion.div>
+    </div>
   );
 }
 
-// ── Services Section ──────────────────────────────────────────────────────────
-
 export function Services() {
+  const { ref: headRef, visible: headVisible } = useReveal(0.1);
+  const { ref: gridRef, visible: gridVisible } = useReveal(0.05);
+
   return (
     <section
       id="services"
       className="relative section-pad border-b border-border/30 overflow-hidden"
-      style={{ background: "oklch(0.13 0.018 50)" }}
+      style={{ background: "oklch(0.11 0.014 48)" }}
       data-ocid="section-services"
     >
-      {/* Background glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
@@ -164,19 +186,25 @@ export function Services() {
       />
 
       <div className="relative z-10 max-w-5xl mx-auto">
-        {/* Heading */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        <div
+          ref={headRef}
+          style={{
+            opacity: headVisible ? 1 : 0,
+            transform: headVisible ? "translateY(0)" : "translateY(30px)",
+            transition: "opacity 0.6s ease-out, transform 0.6s ease-out",
+          }}
           className="mb-12"
         >
-          <p className="font-mono text-xs uppercase tracking-[0.22em] text-muted-foreground mb-3">
-            <span className="inline-block w-6 h-px bg-primary/70 mr-2 align-middle" />
-            What I offer
-            <span className="inline-block w-6 h-px bg-accent/70 ml-2 align-middle" />
-          </p>
+          <span
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono uppercase tracking-widest mb-4"
+            style={{
+              background: "oklch(0.72 0.18 50 / 0.12)",
+              color: "oklch(0.72 0.18 50)",
+              border: "1px solid oklch(0.72 0.18 50 / 0.25)",
+            }}
+          >
+            What I Do
+          </span>
           <h2 className="section-heading gradient-gold-cyan inline-block">
             My Services
           </h2>
@@ -191,20 +219,24 @@ export function Services() {
             <div className="h-px w-24 rounded-full bg-border/50" />
           </div>
           <p className="section-subheading mt-3">
-            End-to-end solutions for WordPress, Frontend, and beyond
+            Professional web development solutions tailored to your needs
           </p>
-        </motion.div>
+        </div>
 
-        {/* Cards grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div
+          ref={gridRef}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {SERVICES.map((svc, i) => (
             <ServiceCard
               key={svc.id}
-              icon={svc.icon}
+              id={svc.id}
+              emoji={svc.emoji}
               title={svc.title}
               desc={svc.desc}
               accentGold={svc.accentGold}
-              index={i}
+              delay={i * 100}
+              visible={gridVisible}
             />
           ))}
         </div>

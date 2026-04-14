@@ -1,63 +1,52 @@
-# Design Brief
+# Design Brief — Abdullah Hosen Portfolio
 
 ## Direction
-Luxury Tech Portfolio — cinematic dark premium vCard with dual-accent (gold + electric cyan) creating sophisticated visual tension on near-black charcoal.
+Premium cinematic dark tech portfolio: gold + electric cyan accents on near-black charcoal. Refined maximalism—restrained geometry, confident typography, material depth via elevated shadows + glassmorphism. RyanCV System layout faithful with enhanced cinematic animations.
 
 ## Tone
-Bold luxury maximalism with restrained geometry: material UI depth, generous whitespace, accent glows, and confident typography hierarchy.
-
-## Differentiation
-Gradient text (gold→cyan) on hero headings + animated skill bars with gradient fills + timeline vertical glow + particle background + card border glows + glass morphism sidebar.
+Confident, refined, unforgettable. Staggered hero entrance, scroll reveals, accent glows, timeline glow pulse, card border glow, sidebar glass-morphism.
 
 ## Color Palette
 
-| Token      | OKLCH           | Role                        |
-|------------|-----------------|----------------------------|
-| background | 0.10 0.015 50  | near-black charcoal base    |
-| foreground | 0.93 0.008 60  | warm off-white text         |
-| card       | 0.18 0.02 50   | elevated dark surfaces      |
-| primary    | 0.72 0.18 50   | warm golden accent          |
-| accent     | 0.72 0.22 210  | electric cyan accent        |
-| muted      | 0.25 0.02 50   | dark separator/divider      |
-| border     | 0.30 0.02 50   | subtle definition lines     |
+| Token      | OKLCH           | Role            |
+|------------|-----------------|-----------------|
+| background | 0.10 0.012 48  | charcoal base   |
+| foreground | 0.93 0.008 60  | warm text       |
+| card       | 0.15 0.016 48  | surfaces        |
+| primary    | 0.72 0.18 50   | gold accent     |
+| accent     | 0.72 0.22 210  | electric cyan   |
+| muted      | 0.22 0.016 48  | dividers        |
+| border     | 0.28 0.018 48  | subtle edges    |
 
 ## Typography
-- Display: Space Grotesk — geometric, confident, tech-forward headings
-- Body: DM Sans — clean, approachable, professional content
-- Mono: JetBrains Mono — code blocks, testimonials, accent text
-
-## Elevation & Depth
-Layered cards with soft elevated shadows + accent border glows; primary/accent illuminate interactive elements; no harsh shadows.
+Display: **Space Grotesk** (300–700) | Body: **DM Sans** (300–700) | Mono: **JetBrains Mono** (400–700)
 
 ## Structural Zones
 
-| Zone    | Background           | Border                    | Notes                          |
-|---------|----------------------|---------------------------|--------------------------------|
-| Header  | card with glow      | accent glow 0.3 opacity  | navigation with sidebar       |
-| Hero    | background gradient | accent-glow              | profile image circle, CTA     |
-| Content | alternating bg/card | subtle border             | section spacing 4-5rem        |
-| Footer  | muted with border   | border                    | contact links, attribution    |
+| Zone    | Background | Border             | Treatment                       |
+|---------|------------|--------------------|---------------------------------|
+| Sidebar | glass-surface | border/0.3 | sticky desktop, drawer mobile |
+| Hero    | bg + gradient | accent glow    | particle BG, stagger entrance |
+| Content | card/muted | subtle / glow  | section pad 4–5rem spacing |
+| Footer  | muted/20   | border subtle  | contact + scroll-to-top |
 
-## Spacing & Rhythm
-Sections spaced 4-5rem apart; card padding 1.5-2rem; micro-spacing 0.5-1rem; generous whitespace reinforces premium feel.
+## Component Library
+- **Buttons**: btn-primary (gold lift hover), btn-secondary (cyan glow border)
+- **Cards**: surface-elevated, card-lift on hover, border-accent-glow pulse
+- **Badges**: muted-bg, foreground, uppercase tracking, badge-pulse animation
+- **Skill bars**: muted container, gradient gold→cyan fill, skill-fill 1.2s ease-out
+- **Timeline**: vertical accent glow line, timeline-glow pulse 2s infinite, glowing dots
 
-## Component Patterns
-- Buttons: gold/cyan with slight hover lift + border glow on accent; rounded 0.5rem
-- Cards: 0.5rem radius, card-bg, border-accent-glow, shadow-elevated on hover
-- Badges: muted-bg, foreground text, 0.5rem radius, uppercase 0.75rem tracking
-- Skill bars: muted-bg container, gradient gold→cyan fill, animated from 0% to var(--skill-value)
+## Motion & Choreography
+Hero: staggered slide-up (0.1s / 0.25s / 0.4s delays, cubic-bezier overshoot) | Scroll reveal: fade-up 40px, 0.6s | Card hover: -4px lift + shadow-elevated | Decorative: float 3s, hero-particle 4s, badge-pulse 2.2s, timeline-glow 2s | **Accessibility**: prefers-reduced-motion disables all
 
-## Motion
-- Entrance: staggered slide-up + fade-in 0.6s cubic-ease (Motion library integration)
-- Hover: card lift (translateY -4px) + border glow pulse 200ms
-- Decorative: floating animations on icons 3s ease-in-out, glow-pulse infinite on accents
+## Token Rules
+- OKLCH values only in CSS variables (L C H format)
+- No raw hex/rgb/inline colors
+- Accent sparingly: CTAs, highlights, interactive feedback
+- Gradient text: hero & section headings only
+- Scrollbar: thin gold with cyan hover
+- Particle BG: subtle, 0.3–0.6 opacity, non-distracting
 
-## Constraints
-- No raw hex/rgb colors — use CSS variables exclusively
-- Accent colors used sparingly for highlights, CTAs, interactive feedback
-- Gradient text only on hero/major headings
-- Custom scrollbar: thin, gold primary with cyan hover
-- Particle background: subtle, low opacity, non-distracting
-
-## Signature Detail
-Gradient text overlays (gold→cyan) on section headings create cinematic depth; paired with animated accent glows and motion library choreography for unforgettable premium feel.
+## Signature
+Staggered cinematic hero + gradient overlays + card glow pulse + timeline glow line + scroll-triggered reveals = premium unforgettable experience.

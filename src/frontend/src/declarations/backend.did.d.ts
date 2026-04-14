@@ -10,7 +10,59 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface _SERVICE {}
+export interface CategoryProjectCount { 'count' : bigint, 'category' : string }
+export type ContactId = bigint;
+export interface ContactSubmission {
+  'id' : ContactId,
+  'subject' : string,
+  'name' : string,
+  'email' : string,
+  'message' : string,
+  'timestamp' : Timestamp,
+}
+export interface DailyContactCount { 'date' : string, 'count' : bigint }
+export interface DashboardStats {
+  'contactsLast30Days' : Array<DailyContactCount>,
+  'totalContacts' : bigint,
+  'totalProjects' : bigint,
+  'projectsByCategory' : Array<CategoryProjectCount>,
+}
+export type LoginResult = { 'ok' : SessionToken } |
+  { 'err' : string };
+export interface Project {
+  'id' : ProjectId,
+  'title' : string,
+  'imageUrls' : Array<string>,
+  'createdAt' : Timestamp,
+  'description' : string,
+  'category' : string,
+}
+export type ProjectId = bigint;
+export type SessionToken = string;
+export type Timestamp = bigint;
+export interface _SERVICE {
+  'adminLogin' : ActorMethod<[string, string], LoginResult>,
+  'createProject' : ActorMethod<
+    [SessionToken, string, string, string, Array<string>],
+    [] | [Project]
+  >,
+  'deleteContact' : ActorMethod<[SessionToken, ContactId], boolean>,
+  'deleteProject' : ActorMethod<[SessionToken, ProjectId], boolean>,
+  'getContactCount' : ActorMethod<[], bigint>,
+  'getContacts' : ActorMethod<[SessionToken], Array<ContactSubmission>>,
+  'getDashboardStats' : ActorMethod<[SessionToken], DashboardStats>,
+  'getProject' : ActorMethod<[ProjectId], [] | [Project]>,
+  'getProjects' : ActorMethod<[], Array<Project>>,
+  'submitContact' : ActorMethod<
+    [string, string, string, string],
+    ContactSubmission
+  >,
+  'updateProject' : ActorMethod<
+    [SessionToken, ProjectId, string, string, string, Array<string>],
+    boolean
+  >,
+  'validateToken' : ActorMethod<[string], boolean>,
+}
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
 export declare const idlFactory: IDL.InterfaceFactory;

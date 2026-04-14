@@ -1,2 +1,61 @@
+type Timestamp = int;
+type SessionToken = text;
+type ProjectId = nat;
+type Project = 
+ record {
+   category: text;
+   createdAt: Timestamp;
+   description: text;
+   id: ProjectId;
+   imageUrls: vec text;
+   title: text;
+ };
+type LoginResult = 
+ variant {
+   err: text;
+   ok: SessionToken;
+ };
+type DashboardStats = 
+ record {
+   contactsLast30Days: vec DailyContactCount;
+   projectsByCategory: vec CategoryProjectCount;
+   totalContacts: nat;
+   totalProjects: nat;
+ };
+type DailyContactCount = 
+ record {
+   count: nat;
+   date: text;
+ };
+type ContactSubmission = 
+ record {
+   email: text;
+   id: ContactId;
+   message: text;
+   name: text;
+   subject: text;
+   timestamp: Timestamp;
+ };
+type ContactId = nat;
+type CategoryProjectCount = 
+ record {
+   category: text;
+   count: nat;
+ };
 service : {
+  adminLogin: (username: text, password: text) -> (LoginResult);
+  createProject: (token: SessionToken, title: text, description: text,
+   category: text, imageUrls: vec text) -> (opt Project);
+  deleteContact: (token: SessionToken, id: ContactId) -> (bool);
+  deleteProject: (token: SessionToken, id: ProjectId) -> (bool);
+  getContactCount: () -> (nat);
+  getContacts: (token: SessionToken) -> (vec ContactSubmission);
+  getDashboardStats: (token: SessionToken) -> (DashboardStats);
+  getProject: (id: ProjectId) -> (opt Project);
+  getProjects: () -> (vec Project);
+  submitContact: (name: text, email: text, subject: text, message: text) ->
+   (ContactSubmission);
+  updateProject: (token: SessionToken, id: ProjectId, title: text,
+   description: text, category: text, imageUrls: vec text) -> (bool);
+  validateToken: (token: text) -> (bool);
 }

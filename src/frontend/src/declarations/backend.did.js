@@ -8,10 +8,151 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
-export const idlService = IDL.Service({});
+export const SessionToken = IDL.Text;
+export const LoginResult = IDL.Variant({
+  'ok' : SessionToken,
+  'err' : IDL.Text,
+});
+export const ProjectId = IDL.Nat;
+export const Timestamp = IDL.Int;
+export const Project = IDL.Record({
+  'id' : ProjectId,
+  'title' : IDL.Text,
+  'imageUrls' : IDL.Vec(IDL.Text),
+  'createdAt' : Timestamp,
+  'description' : IDL.Text,
+  'category' : IDL.Text,
+});
+export const ContactId = IDL.Nat;
+export const ContactSubmission = IDL.Record({
+  'id' : ContactId,
+  'subject' : IDL.Text,
+  'name' : IDL.Text,
+  'email' : IDL.Text,
+  'message' : IDL.Text,
+  'timestamp' : Timestamp,
+});
+export const DailyContactCount = IDL.Record({
+  'date' : IDL.Text,
+  'count' : IDL.Nat,
+});
+export const CategoryProjectCount = IDL.Record({
+  'count' : IDL.Nat,
+  'category' : IDL.Text,
+});
+export const DashboardStats = IDL.Record({
+  'contactsLast30Days' : IDL.Vec(DailyContactCount),
+  'totalContacts' : IDL.Nat,
+  'totalProjects' : IDL.Nat,
+  'projectsByCategory' : IDL.Vec(CategoryProjectCount),
+});
+
+export const idlService = IDL.Service({
+  'adminLogin' : IDL.Func([IDL.Text, IDL.Text], [LoginResult], []),
+  'createProject' : IDL.Func(
+      [SessionToken, IDL.Text, IDL.Text, IDL.Text, IDL.Vec(IDL.Text)],
+      [IDL.Opt(Project)],
+      [],
+    ),
+  'deleteContact' : IDL.Func([SessionToken, ContactId], [IDL.Bool], []),
+  'deleteProject' : IDL.Func([SessionToken, ProjectId], [IDL.Bool], []),
+  'getContactCount' : IDL.Func([], [IDL.Nat], []),
+  'getContacts' : IDL.Func([SessionToken], [IDL.Vec(ContactSubmission)], []),
+  'getDashboardStats' : IDL.Func([SessionToken], [DashboardStats], []),
+  'getProject' : IDL.Func([ProjectId], [IDL.Opt(Project)], []),
+  'getProjects' : IDL.Func([], [IDL.Vec(Project)], []),
+  'submitContact' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+      [ContactSubmission],
+      [],
+    ),
+  'updateProject' : IDL.Func(
+      [
+        SessionToken,
+        ProjectId,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Vec(IDL.Text),
+      ],
+      [IDL.Bool],
+      [],
+    ),
+  'validateToken' : IDL.Func([IDL.Text], [IDL.Bool], []),
+});
 
 export const idlInitArgs = [];
 
-export const idlFactory = ({ IDL }) => { return IDL.Service({}); };
+export const idlFactory = ({ IDL }) => {
+  const SessionToken = IDL.Text;
+  const LoginResult = IDL.Variant({ 'ok' : SessionToken, 'err' : IDL.Text });
+  const ProjectId = IDL.Nat;
+  const Timestamp = IDL.Int;
+  const Project = IDL.Record({
+    'id' : ProjectId,
+    'title' : IDL.Text,
+    'imageUrls' : IDL.Vec(IDL.Text),
+    'createdAt' : Timestamp,
+    'description' : IDL.Text,
+    'category' : IDL.Text,
+  });
+  const ContactId = IDL.Nat;
+  const ContactSubmission = IDL.Record({
+    'id' : ContactId,
+    'subject' : IDL.Text,
+    'name' : IDL.Text,
+    'email' : IDL.Text,
+    'message' : IDL.Text,
+    'timestamp' : Timestamp,
+  });
+  const DailyContactCount = IDL.Record({
+    'date' : IDL.Text,
+    'count' : IDL.Nat,
+  });
+  const CategoryProjectCount = IDL.Record({
+    'count' : IDL.Nat,
+    'category' : IDL.Text,
+  });
+  const DashboardStats = IDL.Record({
+    'contactsLast30Days' : IDL.Vec(DailyContactCount),
+    'totalContacts' : IDL.Nat,
+    'totalProjects' : IDL.Nat,
+    'projectsByCategory' : IDL.Vec(CategoryProjectCount),
+  });
+  
+  return IDL.Service({
+    'adminLogin' : IDL.Func([IDL.Text, IDL.Text], [LoginResult], []),
+    'createProject' : IDL.Func(
+        [SessionToken, IDL.Text, IDL.Text, IDL.Text, IDL.Vec(IDL.Text)],
+        [IDL.Opt(Project)],
+        [],
+      ),
+    'deleteContact' : IDL.Func([SessionToken, ContactId], [IDL.Bool], []),
+    'deleteProject' : IDL.Func([SessionToken, ProjectId], [IDL.Bool], []),
+    'getContactCount' : IDL.Func([], [IDL.Nat], []),
+    'getContacts' : IDL.Func([SessionToken], [IDL.Vec(ContactSubmission)], []),
+    'getDashboardStats' : IDL.Func([SessionToken], [DashboardStats], []),
+    'getProject' : IDL.Func([ProjectId], [IDL.Opt(Project)], []),
+    'getProjects' : IDL.Func([], [IDL.Vec(Project)], []),
+    'submitContact' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+        [ContactSubmission],
+        [],
+      ),
+    'updateProject' : IDL.Func(
+        [
+          SessionToken,
+          ProjectId,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Vec(IDL.Text),
+        ],
+        [IDL.Bool],
+        [],
+      ),
+    'validateToken' : IDL.Func([IDL.Text], [IDL.Bool], []),
+  });
+};
 
 export const init = ({ IDL }) => { return []; };

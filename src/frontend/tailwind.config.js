@@ -95,7 +95,7 @@ export default {
           to: { opacity: "1" },
         },
         "slide-up": {
-          from: { opacity: "0", transform: "translateY(16px)" },
+          from: { opacity: "0", transform: "translateY(40px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "slide-down": {
@@ -114,16 +114,38 @@ export default {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-8px)" },
         },
+        "hero-particle": {
+          "0%": { opacity: "0.3", transform: "translateY(0px)" },
+          "50%": { opacity: "0.6" },
+          "100%": { opacity: "0.3", transform: "translateY(-20px)" },
+        },
+        "timeline-glow": {
+          "0%, 100%": { boxShadow: "0 0 8px oklch(var(--primary) / 0.4)" },
+          "50%": { boxShadow: "0 0 16px oklch(var(--primary) / 0.8)" },
+        },
+        "card-border-glow": {
+          "0%, 100%": {
+            borderColor: "oklch(var(--accent) / 0.3)",
+            boxShadow: "inset 0 0 15px -8px oklch(var(--accent) / 0.2)",
+          },
+          "50%": {
+            borderColor: "oklch(var(--accent) / 0.6)",
+            boxShadow: "inset 0 0 20px -5px oklch(var(--accent) / 0.4)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.6s ease-out",
-        "slide-up": "slide-up 0.6s ease-out",
+        "slide-up": "slide-up 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
         "slide-down": "slide-down 0.6s ease-out",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         "skill-fill": "skill-fill 1.2s ease-out forwards",
         float: "float 3s ease-in-out infinite",
+        "hero-particle": "hero-particle 4s ease-in-out infinite",
+        "timeline-glow": "timeline-glow 2s ease-in-out infinite",
+        "card-border-glow": "card-border-glow 2s ease-in-out infinite",
       },
     },
   },
