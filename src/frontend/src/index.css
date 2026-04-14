@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-display: "Space Grotesk";
+    --font-body: "DM Sans";
+    --font-mono: "JetBrains Mono";
+    --radius: 0.5rem;
+
+    --background: 0.1 0.015 50;
+    --foreground: 0.93 0.008 60;
+    --card: 0.18 0.02 50;
+    --card-foreground: 0.93 0.008 60;
+    --popover: 0.18 0.02 50;
+    --popover-foreground: 0.93 0.008 60;
+
+    --primary: 0.72 0.18 50;
+    --primary-foreground: 0.1 0.015 50;
+
+    --secondary: 0.25 0.02 50;
+    --secondary-foreground: 0.85 0.01 60;
+    --muted: 0.25 0.02 50;
+    --muted-foreground: 0.55 0.01 55;
+
+    --accent: 0.72 0.22 210;
+    --accent-foreground: 0.1 0.015 210;
+
+    --destructive: 0.55 0.22 25;
+    --destructive-foreground: 0.93 0.008 25;
+
+    --border: 0.3 0.02 50;
+    --input: 0.3 0.02 50;
+    --ring: 0.72 0.22 210;
+
+    --chart-1: 0.72 0.18 50;
+    --chart-2: 0.72 0.22 210;
+    --chart-3: 0.6 0.16 150;
+    --chart-4: 0.65 0.18 145;
+    --chart-5: 0.58 0.14 25;
+
+    --sidebar: 0.18 0.02 50;
+    --sidebar-foreground: 0.93 0.008 60;
+    --sidebar-primary: 0.72 0.18 50;
+    --sidebar-primary-foreground: 0.1 0.015 50;
+    --sidebar-accent: 0.72 0.22 210;
+    --sidebar-accent-foreground: 0.1 0.015 210;
+    --sidebar-border: 0.3 0.02 50;
+    --sidebar-ring: 0.72 0.22 210;
+
+    --gradient-gold-cyan: linear-gradient(
+      135deg,
+      oklch(var(--primary)),
+      oklch(var(--accent))
+    );
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 0.1 0.015 50;
+    --foreground: 0.93 0.008 60;
+    --card: 0.18 0.02 50;
+    --card-foreground: 0.93 0.008 60;
+    --popover: 0.18 0.02 50;
+    --popover-foreground: 0.93 0.008 60;
+
+    --primary: 0.72 0.18 50;
+    --primary-foreground: 0.1 0.015 50;
+
+    --secondary: 0.25 0.02 50;
+    --secondary-foreground: 0.85 0.01 60;
+    --muted: 0.25 0.02 50;
+    --muted-foreground: 0.55 0.01 55;
+
+    --accent: 0.72 0.22 210;
+    --accent-foreground: 0.1 0.015 210;
+
+    --destructive: 0.55 0.22 25;
+    --destructive-foreground: 0.93 0.008 25;
+
+    --border: 0.3 0.02 50;
+    --input: 0.3 0.02 50;
+    --ring: 0.72 0.22 210;
+
+    --chart-1: 0.72 0.18 50;
+    --chart-2: 0.72 0.22 210;
+    --chart-3: 0.6 0.16 150;
+    --chart-4: 0.65 0.18 145;
+    --chart-5: 0.58 0.14 25;
+
+    --sidebar: 0.18 0.02 50;
+    --sidebar-foreground: 0.93 0.008 60;
+    --sidebar-primary: 0.72 0.18 50;
+    --sidebar-primary-foreground: 0.1 0.015 50;
+    --sidebar-accent: 0.72 0.22 210;
+    --sidebar-accent-foreground: 0.1 0.015 210;
+    --sidebar-border: 0.3 0.02 50;
+    --sidebar-ring: 0.72 0.22 210;
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mF71Q-gowFQ.woff2")
+    format("woff2");
+  font-display: swap;
+  font-weight: 300 700;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("https://fonts.gstatic.com/s/dmsans/v15/rP2tp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K6z9mXgjU0.woff2")
+    format("woff2");
+  font-display: swap;
+  font-weight: 300 700;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8Kqxj.woff2")
+    format("woff2");
+  font-display: swap;
+  font-weight: 400 700;
+}
+
+@layer utilities {
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+
+  .gradient-gold-cyan {
+    background: var(--gradient-gold-cyan);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .shadow-accent-glow {
+    box-shadow: 0 0 20px -5px oklch(var(--accent) / 0.4), 0 4px 12px -2px
+      rgba(0, 0, 0, 0.3);
+  }
+
+  .shadow-elevated {
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4), 0 0 1px -0.5px
+      rgba(0, 0, 0, 0.2);
+  }
+
+  .border-accent-glow {
+    border: 1px solid oklch(var(--accent) / 0.3);
+    box-shadow: inset 0 0 20px -10px oklch(var(--accent) / 0.2);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(var(--primary) / 0.6) oklch(var(--background));
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: oklch(var(--background));
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: oklch(var(--primary) / 0.5);
+    border-radius: 2px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: oklch(var(--accent) / 0.7);
+  }
+
+  .section-pad {
+    @apply py-20 px-8 md:px-12;
+  }
+
+  .section-heading {
+    @apply font-display font-bold text-3xl md:text-4xl mb-3;
+  }
+
+  .section-subheading {
+    @apply text-muted-foreground text-base mb-10;
+  }
+}
