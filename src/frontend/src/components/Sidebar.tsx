@@ -74,7 +74,7 @@ export function Sidebar() {
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
         className="flex flex-col items-center pt-10 pb-6 px-6"
       >
-        {/* Profile avatar with dual animated pulsing rings */}
+        {/* Profile avatar with premium pulsing rings */}
         <div className="relative mb-5">
           {/* Outer gold spinning ring */}
           <div
@@ -110,25 +110,28 @@ export function Sidebar() {
               animation: "glow-pulse-anim 3s ease-in-out infinite",
             }}
           />
-          {/* Avatar image */}
+          {/* Avatar image — studio photo */}
           <div
             className="relative w-24 h-24 rounded-full overflow-hidden border-2"
             style={{ borderColor: "oklch(0.20 0.016 48)" }}
           >
             <img
-              src="/assets/generated/profile-avatar.dim_400x400.jpg"
+              src="/assets/profile-studio.jpg"
               alt="Md Abdullah Hosen — professional headshot"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-center"
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
-                target.style.display = "none";
-                const parent = target.parentElement;
-                if (parent) {
-                  parent.style.background =
-                    "linear-gradient(135deg, oklch(0.20 0.016 48), oklch(0.18 0.016 48))";
-                  parent.innerHTML =
-                    '<span style="display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--font-display);font-weight:800;font-size:1.75rem;background:linear-gradient(135deg,oklch(0.72 0.18 50),oklch(0.72 0.22 210));-webkit-background-clip:text;-webkit-text-fill-color:transparent">AH</span>';
-                }
+                target.src = "/assets/generated/profile-avatar.dim_400x400.jpg";
+                target.onerror = () => {
+                  target.style.display = "none";
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.style.background =
+                      "linear-gradient(135deg, oklch(0.20 0.016 48), oklch(0.18 0.016 48))";
+                    parent.innerHTML =
+                      '<span style="display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--font-display);font-weight:800;font-size:1.75rem;background:linear-gradient(135deg,oklch(0.72 0.18 50),oklch(0.72 0.22 210));-webkit-background-clip:text;-webkit-text-fill-color:transparent">AH</span>';
+                  }
+                };
               }}
             />
           </div>
@@ -147,18 +150,18 @@ export function Sidebar() {
         </div>
 
         {/* Name */}
-        <h2 className="font-display font-bold text-[15px] text-foreground text-center leading-tight mb-1">
+        <h2 className="font-display font-bold text-xl lg:text-2xl text-foreground text-center leading-tight mb-1 tracking-tight">
           Md Abdullah Hosen
         </h2>
 
         {/* Title */}
-        <p className="text-[11px] text-muted-foreground text-center leading-relaxed mb-2 px-2">
+        <p className="text-sm lg:text-base font-accent text-muted-foreground text-center leading-relaxed mb-2 px-2">
           WordPress Developer &amp; Frontend Engineer
         </p>
 
         {/* Location */}
         <p
-          className="flex items-center gap-1 text-[11px] font-mono"
+          className="flex items-center gap-1 text-xs lg:text-sm font-accent"
           style={{ color: "oklch(0.55 0.012 55 / 0.75)" }}
         >
           <MapPin
@@ -200,7 +203,7 @@ export function Sidebar() {
                   onClick={() => scrollTo(link.id)}
                   data-ocid={`nav-${link.id}`}
                   aria-current={isActive ? "page" : undefined}
-                  className={`w-full text-left px-3 py-[11px] rounded-lg font-display text-[13px] font-medium transition-smooth flex items-center gap-3 group relative overflow-hidden ${
+                  className={`w-full text-left px-3 py-[11px] rounded-lg font-accent text-sm lg:text-base font-medium transition-smooth flex items-center gap-3 group relative overflow-hidden ${
                     isActive
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
@@ -214,7 +217,6 @@ export function Sidebar() {
                       : {}
                   }
                 >
-                  {/* Active left border glow */}
                   <span
                     className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full"
                     style={{
@@ -228,7 +230,6 @@ export function Sidebar() {
                       transition: "height 0.25s ease",
                     }}
                   />
-                  {/* Nav icon glyph */}
                   <span
                     className={`text-[13px] leading-none w-4 text-center shrink-0 font-mono transition-colors duration-200 ${
                       isActive
@@ -239,7 +240,6 @@ export function Sidebar() {
                     {NAV_ICONS[link.id] ?? "·"}
                   </span>
                   {link.label}
-                  {/* Active right arrow indicator */}
                   {isActive && (
                     <span
                       className="ml-auto text-[10px] font-mono shrink-0"
@@ -263,7 +263,6 @@ export function Sidebar() {
         className="px-5 py-4 border-t"
         style={{ borderColor: "oklch(0.22 0.016 48 / 0.5)" }}
       >
-        {/* Available for hire badge */}
         <div
           className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg"
           style={{
@@ -279,12 +278,11 @@ export function Sidebar() {
               boxShadow: "0 0 6px 2px oklch(0.75 0.2 145 / 0.4)",
             }}
           />
-          <span className="text-[11px] font-mono text-primary tracking-wide">
+          <span className="text-xs lg:text-sm font-accent text-primary tracking-wide">
             Available for hire
           </span>
         </div>
 
-        {/* Social icons row */}
         <div className="flex items-center gap-1">
           {SOCIAL_LINKS.map((s) => (
             <a

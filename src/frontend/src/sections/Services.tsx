@@ -124,7 +124,7 @@ function ServiceCard({
       </div>
 
       <h3
-        className="relative z-10 font-display font-bold text-lg mb-3"
+        className="relative z-10 font-display font-bold text-xl lg:text-2xl mb-3 tracking-tight leading-tight"
         style={{
           color: hovered ? color : "oklch(0.93 0.008 60)",
           transition: "color 0.25s ease",
@@ -133,13 +133,13 @@ function ServiceCard({
         {title}
       </h3>
 
-      <p className="relative z-10 text-muted-foreground text-sm leading-relaxed flex-1">
+      <p className="relative z-10 text-muted-foreground text-base lg:text-lg leading-[1.7] flex-1 font-body">
         {desc}
       </p>
 
       <a
         href="#contact"
-        className="relative z-10 inline-flex items-center gap-1 text-sm font-semibold mt-5 font-mono"
+        className="relative z-10 inline-flex items-center gap-1 text-base lg:text-lg font-semibold mt-5 font-accent"
         style={{ color, opacity: 0.85, transition: "opacity 0.2s ease" }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLAnchorElement).style.opacity = "1";
@@ -172,7 +172,7 @@ export function Services() {
   return (
     <section
       id="services"
-      className="relative section-pad border-b border-border/30 overflow-hidden"
+      className="relative section-pad border-b border-border/30 overflow-hidden ambient-bg"
       style={{ background: "oklch(0.11 0.014 48)" }}
       data-ocid="section-services"
     >
@@ -185,7 +185,7 @@ export function Services() {
         }}
       />
 
-      <div className="relative z-10 max-w-5xl mx-auto">
+      <div className="relative z-10 max-w-6xl mx-auto">
         <div
           ref={headRef}
           style={{
@@ -196,7 +196,7 @@ export function Services() {
           className="mb-12"
         >
           <span
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono uppercase tracking-widest mb-4"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs lg:text-sm font-accent font-semibold uppercase tracking-widest mb-4"
             style={{
               background: "oklch(0.72 0.18 50 / 0.12)",
               color: "oklch(0.72 0.18 50)",

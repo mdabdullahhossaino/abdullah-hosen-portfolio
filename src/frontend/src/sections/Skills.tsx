@@ -1,5 +1,4 @@
 import { useReveal } from "@/hooks/useReveal";
-import { useState } from "react";
 
 interface SkillBarProps {
   label: string;
@@ -10,9 +9,10 @@ interface SkillBarProps {
 }
 
 const FILL_GRADIENTS = {
-  gold: "linear-gradient(90deg, oklch(0.72 0.18 50), oklch(0.68 0.16 45))",
-  cyan: "linear-gradient(90deg, oklch(0.62 0.22 210), oklch(0.72 0.22 210))",
-  mixed: "linear-gradient(90deg, oklch(0.72 0.18 50), oklch(0.72 0.22 210))",
+  gold: "linear-gradient(90deg, oklch(0.65 0.18 50), oklch(0.72 0.18 50), oklch(0.76 0.16 55))",
+  cyan: "linear-gradient(90deg, oklch(0.60 0.22 210), oklch(0.72 0.22 210), oklch(0.76 0.20 215))",
+  mixed:
+    "linear-gradient(90deg, oklch(0.72 0.18 50), oklch(0.70 0.22 230), oklch(0.72 0.22 210))",
 };
 
 function SkillBar({ label, pct, index, active, fillStyle }: SkillBarProps) {
@@ -21,32 +21,48 @@ function SkillBar({ label, pct, index, active, fillStyle }: SkillBarProps) {
       className="group"
       data-ocid={`skill-bar-${label.toLowerCase().replace(/[\s/&.]+/g, "-")}`}
     >
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="font-body text-sm text-foreground">{label}</span>
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-accent text-base lg:text-lg text-foreground font-medium">
+          {label}
+        </span>
         <span
-          className="font-mono text-xs font-semibold"
+          className="font-mono text-sm lg:text-base font-bold tabular-nums"
           style={{
             opacity: active ? 1 : 0,
             transition: `opacity 0.4s ease ${index * 80 + 300}ms`,
             color:
               fillStyle === "cyan"
                 ? "oklch(0.72 0.22 210)"
-                : "oklch(0.72 0.18 50)",
+                : fillStyle === "gold"
+                  ? "oklch(0.72 0.18 50)"
+                  : "oklch(0.76 0.20 215)",
           }}
         >
           {pct}%
         </span>
       </div>
+      {/* Track */}
       <div
-        className="h-[3px] w-full rounded-full overflow-hidden"
-        style={{ background: "oklch(0.22 0.016 48)" }}
+        className="h-[4px] w-full rounded-full overflow-hidden relative"
+        style={{ background: "oklch(0.20 0.016 48)" }}
       >
+        {/* Glow shimmer under bar */}
         <div
-          className="h-full rounded-full"
+          className="absolute inset-0 rounded-full pointer-events-none"
           style={{
             width: active ? `${pct}%` : "0%",
             background: FILL_GRADIENTS[fillStyle],
-            transition: `width 1.1s cubic-bezier(0.22, 1, 0.36, 1) ${index * 80 + 150}ms`,
+            boxShadow: `0 0 8px 1px ${fillStyle === "cyan" ? "oklch(0.72 0.22 210 / 0.5)" : fillStyle === "gold" ? "oklch(0.72 0.18 50 / 0.5)" : "oklch(0.72 0.22 210 / 0.4)"}`,
+            transition: `width 1.2s cubic-bezier(0.22, 1, 0.36, 1) ${index * 80 + 150}ms`,
+          }}
+        />
+        {/* Fill */}
+        <div
+          className="h-full rounded-full relative z-10"
+          style={{
+            width: active ? `${pct}%` : "0%",
+            background: FILL_GRADIENTS[fillStyle],
+            transition: `width 1.2s cubic-bezier(0.22, 1, 0.36, 1) ${index * 80 + 150}ms`,
           }}
         />
       </div>
@@ -66,40 +82,40 @@ const CATEGORIES: SkillCategory[] = [
   {
     title: "Frontend Development",
     icon: "🖥️",
-    iconColor: "cyan",
+    iconColor: "gold",
     fillStyle: "gold",
     skills: [
-      { label: "HTML/CSS", pct: 95 },
-      { label: "JavaScript", pct: 90 },
-      { label: "WordPress", pct: 92 },
-      { label: "Elementor", pct: 88 },
-      { label: "PHP", pct: 75 },
+      { label: "WordPress", pct: 100 },
+      { label: "Elementor", pct: 98 },
+      { label: "HTML/CSS", pct: 90 },
+      { label: "PHP", pct: 90 },
+      { label: "JavaScript", pct: 80 },
     ],
   },
   {
     title: "Backend & CMS",
     icon: "⚙️",
-    iconColor: "gold",
+    iconColor: "cyan",
     fillStyle: "cyan",
     skills: [
-      { label: "MySQL", pct: 80 },
-      { label: "cPanel / WHM", pct: 85 },
-      { label: "Git / GitHub", pct: 88 },
-      { label: "WP Security", pct: 90 },
-      { label: "WooCommerce", pct: 87 },
+      { label: "cPanel / WHM", pct: 95 },
+      { label: "WP Security", pct: 98 },
+      { label: "Bug Fix", pct: 95 },
+      { label: "Malware Remove", pct: 99 },
+      { label: "WooCommerce", pct: 90 },
     ],
   },
   {
     title: "Tools & Workflow",
     icon: "🛠️",
-    iconColor: "cyan",
+    iconColor: "gold",
     fillStyle: "mixed",
     skills: [
-      { label: "VS Code", pct: 95 },
-      { label: "Figma", pct: 82 },
-      { label: "AI Tools", pct: 85 },
-      { label: "Photoshop", pct: 75 },
-      { label: "Page Speed Opt.", pct: 93 },
+      { label: "AI Tools", pct: 90 },
+      { label: "AI Automation", pct: 94 },
+      { label: "Figma", pct: 92 },
+      { label: "Photoshop", pct: 85 },
+      { label: "Page Speed Opt.", pct: 98 },
     ],
   },
 ];
@@ -120,11 +136,15 @@ function CategoryCard({ category, delay, visible }: CategoryCardProps) {
     category.iconColor === "gold"
       ? "oklch(0.72 0.18 50)"
       : "oklch(0.72 0.22 210)";
+  const borderTop =
+    category.iconColor === "gold"
+      ? "oklch(0.72 0.18 50 / 0.45)"
+      : "oklch(0.72 0.22 210 / 0.45)";
 
   return (
     <div
       ref={ref}
-      className="flex flex-col p-6 rounded-2xl border border-border/30 overflow-hidden"
+      className="skills-card flex flex-col p-6 rounded-2xl border border-border/30 overflow-hidden relative group"
       style={{
         background: "oklch(0.13 0.016 48)",
         opacity: visible ? 1 : 0,
@@ -133,23 +153,40 @@ function CategoryCard({ category, delay, visible }: CategoryCardProps) {
       }}
       data-ocid={`skills-card-${category.title.toLowerCase().replace(/[\s&/]+/g, "-")}`}
     >
-      <div className="flex items-center gap-3 mb-6">
+      {/* Top accent line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${borderTop}, transparent)`,
+        }}
+        aria-hidden="true"
+      />
+      {/* Subtle hover glow */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-400 rounded-2xl"
+        style={{
+          background: `radial-gradient(ellipse 70% 50% at 50% 0%, ${iconColor.replace(")", " / 0.07)")} 0%, transparent 60%)`,
+        }}
+        aria-hidden="true"
+      />
+
+      <div className="flex items-center gap-3 mb-6 relative z-10">
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
           style={{ background: iconBg, color: iconColor }}
         >
           {category.icon}
         </div>
-        <h3 className="font-display font-semibold text-base text-foreground">
+        <h3 className="font-display font-bold text-lg lg:text-xl text-foreground tracking-tight">
           {category.title}
         </h3>
         <div
           className="flex-1 h-px ml-auto"
-          style={{ background: `${iconColor.replace(")", " / 0.2)")}` }}
+          style={{ background: `${iconColor.replace(")", " / 0.18)")}` }}
         />
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5 relative z-10">
         {category.skills.map((skill, i) => (
           <SkillBar
             key={skill.label}
@@ -172,7 +209,7 @@ export function Skills() {
   return (
     <section
       id="skills"
-      className="relative section-pad border-b border-border/30 overflow-hidden"
+      className="relative section-pad border-b border-border/30 overflow-hidden ambient-bg"
       data-ocid="section-skills"
     >
       <div
@@ -184,7 +221,7 @@ export function Skills() {
         }}
       />
 
-      <div className="relative z-10 max-w-5xl mx-auto">
+      <div className="relative z-10 max-w-6xl mx-auto">
         <div
           ref={headRef}
           style={{
@@ -195,7 +232,7 @@ export function Skills() {
           className="mb-12"
         >
           <span
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono uppercase tracking-widest mb-4"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs lg:text-sm font-accent font-semibold uppercase tracking-widest mb-4"
             style={{
               background: "oklch(0.72 0.22 210 / 0.12)",
               color: "oklch(0.72 0.22 210)",
@@ -235,7 +272,7 @@ export function Skills() {
         </div>
 
         <p
-          className="text-muted-foreground text-xs font-mono text-center mt-10 uppercase tracking-widest"
+          className="text-muted-foreground text-xs lg:text-sm font-accent text-center mt-10 uppercase tracking-widest"
           style={{
             opacity: gridVisible ? 1 : 0,
             transition: "opacity 0.6s ease-out 500ms",
@@ -245,6 +282,11 @@ export function Skills() {
           knowledge
         </p>
       </div>
+
+      <style>{`
+        .skills-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .skills-card:hover { transform: translateY(-4px) !important; box-shadow: 0 12px 40px -12px oklch(0.72 0.18 50 / 0.18); }
+      `}</style>
     </section>
   );
 }

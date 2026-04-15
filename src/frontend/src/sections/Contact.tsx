@@ -140,6 +140,9 @@ const SERVICES: ServiceOption[] = [
   },
 ];
 
+const MSG_MAX = 500;
+const MSG_MIN = 20;
+
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -185,6 +188,16 @@ export function Contact() {
   const [submittedName, setSubmittedName] = useState("");
   const [checkAnimated, setCheckAnimated] = useState(false);
 
+  const msgLen = message.length;
+  const msgNearLimit = msgLen >= 450;
+  const msgAtLimit = msgLen >= MSG_MAX;
+
+  const msgCounterColor = msgAtLimit
+    ? "oklch(0.65 0.22 25)"
+    : msgNearLimit
+      ? "oklch(0.72 0.18 50)"
+      : "oklch(0.48 0.010 55)";
+
   function handleServiceChange(val: string) {
     setService(val);
     if (val) {
@@ -197,13 +210,38 @@ export function Contact() {
     }
   }
 
+  function handleMessageChange(val: string) {
+    if (val.length > MSG_MAX) return;
+    setMessage(val);
+    if (touched.message) blurValidateMessage(val);
+  }
+
+  function blurValidateMessage(val: string) {
+    setErrors((prev) => {
+      const { message: _m, ...rest } = prev;
+      if (!val.trim()) return { ...rest, message: "Message is required" };
+      if (val.trim().length < MSG_MIN)
+        return {
+          ...rest,
+          message: `Message must be at least ${MSG_MIN} characters`,
+        };
+      if (val.length > MSG_MAX)
+        return {
+          ...rest,
+          message: `Message must not exceed ${MSG_MAX} characters`,
+        };
+      return rest;
+    });
+  }
+
   const isValid =
     !!service &&
     name.trim().length >= 2 &&
     email.trim() &&
     validateEmail(email) &&
     subject.trim() &&
-    message.trim().length >= 20;
+    message.trim().length >= MSG_MIN &&
+    message.length <= MSG_MAX;
 
   function blurValidate(field: string, value: string) {
     setTouched((prev) => ({ ...prev, [field]: true }));
@@ -234,11 +272,9 @@ export function Contact() {
         return rest;
       }
       if (field === "message") {
-        const { message: _m, ...rest } = next;
-        if (!value.trim()) return { ...rest, message: "Message is required" };
-        if (value.trim().length < 20)
-          return { ...rest, message: "Message must be at least 20 characters" };
-        return rest;
+        setTouched((prev) => ({ ...prev, message: true }));
+        blurValidateMessage(value);
+        return next;
       }
       return next;
     });
@@ -254,8 +290,10 @@ export function Contact() {
     else if (!validateEmail(email)) errs.email = "Invalid email address";
     if (!subject.trim()) errs.subject = "Subject is required";
     if (!message.trim()) errs.message = "Message is required";
-    else if (message.trim().length < 20)
-      errs.message = "Message must be at least 20 characters";
+    else if (message.trim().length < MSG_MIN)
+      errs.message = `Message must be at least ${MSG_MIN} characters`;
+    else if (message.length > MSG_MAX)
+      errs.message = `Message must not exceed ${MSG_MAX} characters`;
 
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
@@ -305,10 +343,9 @@ export function Contact() {
   return (
     <section
       id="contact"
-      className="section-pad border-b border-border/30 relative overflow-hidden"
+      className="section-pad border-b border-border/30 relative overflow-hidden ambient-bg"
       data-ocid="section-contact"
     >
-      {/* Ambient glow backgrounds */}
       <div
         className="absolute -bottom-32 -left-32 w-64 h-64 rounded-full pointer-events-none"
         style={{
@@ -327,600 +364,608 @@ export function Contact() {
       />
 
       {/* Section header */}
-      <div
-        ref={headerReveal.ref}
-        className={`reveal-fade-up mb-12 ${headerReveal.visible ? "revealed" : ""}`}
-      >
-        <span
-          className="inline-block font-mono text-[11px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-4"
-          style={{
-            color: "oklch(0.72 0.22 210)",
-            background: "oklch(0.72 0.22 210 / 0.10)",
-            border: "1px solid oklch(0.72 0.22 210 / 0.28)",
-          }}
-        >
-          Get In Touch
-        </span>
-        <h2 className="section-heading text-foreground mb-2">
-          Let&apos;s <span className="gradient-gold-cyan">Work Together</span>
-        </h2>
+      <div className="max-w-6xl mx-auto">
         <div
-          className="w-14 h-0.5 mb-4 rounded-full"
-          style={{
-            background:
-              "linear-gradient(to right, oklch(0.72 0.18 50), oklch(0.72 0.22 210))",
-          }}
-        />
-        <p className="section-subheading max-w-md">
-          Have a project in mind? I&apos;d love to help you build something
-          exceptional.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
-        {/* LEFT — Contact Info */}
-        <div
-          ref={leftReveal.ref}
-          className={`reveal-fade-up ${leftReveal.visible ? "revealed" : ""}`}
-          style={{ animationDelay: "0.1s" }}
+          ref={headerReveal.ref}
+          className={`reveal-fade-up mb-12 ${headerReveal.visible ? "revealed" : ""}`}
         >
-          <p className="text-muted-foreground text-sm leading-relaxed mb-8">
-            I&apos;m always open to discussing new projects, creative ideas, or
-            opportunities to bring your vision to life. Reach out through the
-            form or any of the channels below.
-          </p>
-
-          {/* Contact info cards */}
-          <div className="space-y-3 mb-8">
-            {CONTACT_INFO.map((info, i) => {
-              const Icon = info.icon;
-              const isStatus = info.label === "Status";
-              return (
-                <a
-                  key={info.label}
-                  href={info.href}
-                  target={info.href.startsWith("http") ? "_blank" : undefined}
-                  rel={
-                    info.href.startsWith("http")
-                      ? "noopener noreferrer"
-                      : undefined
-                  }
-                  className="flex items-center gap-4 p-4 rounded-2xl border group transition-smooth no-underline card-lift relative overflow-hidden"
-                  style={{
-                    background: "oklch(0.13 0.014 48)",
-                    borderColor: info.borderColor,
-                    animationDelay: `${i * 0.07}s`,
-                  }}
-                  data-ocid={`contact-info-${info.label.toLowerCase()}`}
-                  aria-label={`${info.label}: ${info.value}`}
-                >
-                  <div
-                    className="absolute inset-x-0 bottom-0 h-px opacity-0 group-hover:opacity-100 transition-smooth"
-                    style={{
-                      background: `linear-gradient(to right, transparent, ${info.iconColor}, transparent)`,
-                    }}
-                  />
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-smooth group-hover:scale-110"
-                    style={{
-                      background: info.bgColor,
-                      border: `1px solid ${info.borderColor}`,
-                    }}
-                  >
-                    <Icon size={16} style={{ color: info.iconColor }} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className="text-[10px] font-mono uppercase tracking-wider mb-0.5"
-                      style={{ color: "oklch(0.50 0.010 55)" }}
-                    >
-                      {info.label}
-                    </p>
-                    <p className="text-foreground text-sm font-medium truncate">
-                      {info.value}
-                    </p>
-                  </div>
-                  {isStatus && (
-                    <span
-                      className="flex items-center gap-1.5 shrink-0 text-[10px] font-mono font-semibold px-2 py-1 rounded-full"
-                      style={{
-                        color: "oklch(0.75 0.20 145)",
-                        background: "oklch(0.75 0.20 145 / 0.12)",
-                        border: "1px solid oklch(0.75 0.20 145 / 0.30)",
-                      }}
-                    >
-                      <span
-                        className="w-1.5 h-1.5 rounded-full animate-pulse"
-                        style={{ background: "oklch(0.75 0.20 145)" }}
-                      />
-                      Active
-                    </span>
-                  )}
-                </a>
-              );
-            })}
-          </div>
-
-          {/* Social links */}
-          <div className="mb-8">
-            <p
-              className="text-[10px] font-mono uppercase tracking-[0.2em] mb-3"
-              style={{ color: "oklch(0.48 0.010 55)" }}
-            >
-              Follow Me
-            </p>
-            <ul
-              className="flex items-center gap-2 list-none p-0"
-              aria-label="Social media links"
-            >
-              {SOCIAL_LINKS.map(({ icon: Icon, href, label }) => (
-                <li key={label}>
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={label}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center border border-border/40 text-muted-foreground transition-smooth hover:scale-110 hover:border-primary/50 hover:text-primary hover:shadow-gold-glow"
-                    style={{ background: "oklch(0.15 0.016 48)" }}
-                    data-ocid={`contact-social-${label.toLowerCase()}`}
-                  >
-                    <Icon size={16} />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Available badge */}
-          <div
-            className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full font-mono text-xs font-semibold badge-pulse"
+          <span
+            className="inline-block font-accent text-xs lg:text-sm font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-4"
             style={{
-              color: "oklch(0.72 0.18 50)",
-              background: "oklch(0.72 0.18 50 / 0.10)",
-              border: "1px solid oklch(0.72 0.18 50 / 0.32)",
+              color: "oklch(0.72 0.22 210)",
+              background: "oklch(0.72 0.22 210 / 0.10)",
+              border: "1px solid oklch(0.72 0.22 210 / 0.28)",
             }}
-            data-ocid="freelance-badge"
           >
-            <span
-              className="w-2 h-2 rounded-full animate-pulse"
-              style={{ background: "oklch(0.72 0.18 50)" }}
-            />
-            Available for Freelance Work
-          </div>
+            Get In Touch
+          </span>
+          <h2 className="section-heading text-foreground mb-2">
+            Let&apos;s <span className="gradient-gold-cyan">Work Together</span>
+          </h2>
+          <div
+            className="w-14 h-0.5 mb-4 rounded-full"
+            style={{
+              background:
+                "linear-gradient(to right, oklch(0.72 0.18 50), oklch(0.72 0.22 210))",
+            }}
+          />
+          <p className="section-subheading max-w-md">
+            Have a project in mind? I&apos;d love to help you build something
+            exceptional.
+          </p>
         </div>
 
-        {/* RIGHT — Contact Form */}
-        <div
-          ref={rightReveal.ref}
-          className={`reveal-fade-up ${rightReveal.visible ? "revealed" : ""}`}
-          style={{ animationDelay: "0.22s" }}
-        >
-          {success ? (
-            /* ── Cinematic Success State ── */
-            <div
-              className="flex flex-col items-center justify-center text-center py-16 px-8 rounded-2xl border relative overflow-hidden"
-              style={{
-                background: "oklch(0.12 0.014 48)",
-                borderColor: "oklch(0.75 0.20 145 / 0.35)",
-                minHeight: "440px",
-              }}
-              data-ocid="contact-success"
-            >
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at center, oklch(0.75 0.20 145 / 0.07) 0%, transparent 65%)",
-                }}
-                aria-hidden="true"
-              />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
+          {/* LEFT — Contact Info */}
+          <div
+            ref={leftReveal.ref}
+            className={`reveal-fade-up ${leftReveal.visible ? "revealed" : ""}`}
+            style={{ animationDelay: "0.1s" }}
+          >
+            <p className="text-muted-foreground text-base lg:text-lg leading-[1.75] mb-8 font-body">
+              I&apos;m always open to discussing new projects, creative ideas,
+              or opportunities to bring your vision to life. Reach out through
+              the form or any of the channels below.
+            </p>
 
-              <div className="relative mb-7">
+            <div className="space-y-3 mb-8">
+              {CONTACT_INFO.map((info, i) => {
+                const Icon = info.icon;
+                const isStatus = info.label === "Status";
+                return (
+                  <a
+                    key={info.label}
+                    href={info.href}
+                    target={info.href.startsWith("http") ? "_blank" : undefined}
+                    rel={
+                      info.href.startsWith("http")
+                        ? "noopener noreferrer"
+                        : undefined
+                    }
+                    className="flex items-center gap-4 p-4 rounded-2xl border group transition-smooth no-underline card-lift relative overflow-hidden"
+                    style={{
+                      background: "oklch(0.13 0.014 48)",
+                      borderColor: info.borderColor,
+                      animationDelay: `${i * 0.07}s`,
+                    }}
+                    data-ocid={`contact-info-${info.label.toLowerCase()}`}
+                    aria-label={`${info.label}: ${info.value}`}
+                  >
+                    <div
+                      className="absolute inset-x-0 bottom-0 h-px opacity-0 group-hover:opacity-100 transition-smooth"
+                      style={{
+                        background: `linear-gradient(to right, transparent, ${info.iconColor}, transparent)`,
+                      }}
+                    />
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-smooth group-hover:scale-110"
+                      style={{
+                        background: info.bgColor,
+                        border: `1px solid ${info.borderColor}`,
+                      }}
+                    >
+                      <Icon size={16} style={{ color: info.iconColor }} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="text-xs font-accent uppercase tracking-wider mb-0.5"
+                        style={{ color: "oklch(0.50 0.010 55)" }}
+                      >
+                        {info.label}
+                      </p>
+                      <p className="text-foreground text-sm lg:text-base font-medium truncate">
+                        {info.value}
+                      </p>
+                    </div>
+                    {isStatus && (
+                      <span
+                        className="flex items-center gap-1.5 shrink-0 text-[10px] font-mono font-semibold px-2 py-1 rounded-full"
+                        style={{
+                          color: "oklch(0.75 0.20 145)",
+                          background: "oklch(0.75 0.20 145 / 0.12)",
+                          border: "1px solid oklch(0.75 0.20 145 / 0.30)",
+                        }}
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full animate-pulse"
+                          style={{ background: "oklch(0.75 0.20 145)" }}
+                        />
+                        Active
+                      </span>
+                    )}
+                  </a>
+                );
+              })}
+            </div>
+
+            <div className="mb-8">
+              <p
+                className="text-xs lg:text-sm font-accent uppercase tracking-[0.2em] mb-3"
+                style={{ color: "oklch(0.48 0.010 55)" }}
+              >
+                Follow Me
+              </p>
+              <ul
+                className="flex items-center gap-2 list-none p-0"
+                aria-label="Social media links"
+              >
+                {SOCIAL_LINKS.map(({ icon: Icon, href, label }) => (
+                  <li key={label}>
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center border border-border/40 text-muted-foreground transition-smooth hover:scale-110 hover:border-primary/50 hover:text-primary hover:shadow-gold-glow"
+                      style={{ background: "oklch(0.15 0.016 48)" }}
+                      data-ocid={`contact-social-${label.toLowerCase()}`}
+                    >
+                      <Icon size={16} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div
+              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full font-mono text-xs font-semibold badge-pulse"
+              style={{
+                color: "oklch(0.72 0.18 50)",
+                background: "oklch(0.72 0.18 50 / 0.10)",
+                border: "1px solid oklch(0.72 0.18 50 / 0.32)",
+              }}
+              data-ocid="freelance-badge"
+            >
+              <span
+                className="w-2 h-2 rounded-full animate-pulse"
+                style={{ background: "oklch(0.72 0.18 50)" }}
+              />
+              Available for Freelance Work
+            </div>
+          </div>
+
+          {/* RIGHT — Contact Form */}
+          <div
+            ref={rightReveal.ref}
+            className={`reveal-fade-up ${rightReveal.visible ? "revealed" : ""}`}
+            style={{ animationDelay: "0.22s" }}
+          >
+            {success ? (
+              <div
+                className="flex flex-col items-center justify-center text-center py-16 px-8 rounded-2xl border relative overflow-hidden"
+                style={{
+                  background: "oklch(0.12 0.014 48)",
+                  borderColor: "oklch(0.75 0.20 145 / 0.35)",
+                  minHeight: "440px",
+                }}
+                data-ocid="contact-success"
+              >
                 <div
-                  className="w-24 h-24 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                  className="absolute inset-0 pointer-events-none"
                   style={{
                     background:
-                      "conic-gradient(from 0deg, oklch(0.75 0.20 145 / 0.5), oklch(0.72 0.22 210 / 0.5), oklch(0.75 0.20 145 / 0.5))",
-                    padding: "1px",
-                    borderRadius: "9999px",
-                    animation: checkAnimated
-                      ? "ring-rotate-cw 4s linear infinite"
-                      : "none",
+                      "radial-gradient(ellipse at center, oklch(0.75 0.20 145 / 0.07) 0%, transparent 65%)",
                   }}
                   aria-hidden="true"
                 />
-                <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center relative z-10"
-                  style={{
-                    background: "oklch(0.12 0.014 48)",
-                    border: "2px solid oklch(0.75 0.20 145 / 0.40)",
-                    boxShadow: checkAnimated
-                      ? "0 0 30px -5px oklch(0.75 0.20 145 / 0.45)"
-                      : "none",
-                    transition: "box-shadow 0.6s ease",
-                  }}
-                >
-                  <CheckCircle2
-                    size={36}
+                <div className="relative mb-7">
+                  <div
+                    className="w-24 h-24 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                     style={{
-                      color: "oklch(0.75 0.20 145)",
-                      opacity: checkAnimated ? 1 : 0,
-                      transform: checkAnimated ? "scale(1)" : "scale(0.5)",
-                      transition:
-                        "opacity 0.4s ease 0.15s, transform 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s",
-                    }}
-                  />
-                </div>
-              </div>
-
-              <h3
-                className="font-display font-bold text-2xl mb-2"
-                style={{
-                  opacity: checkAnimated ? 1 : 0,
-                  transform: checkAnimated
-                    ? "translateY(0)"
-                    : "translateY(12px)",
-                  transition:
-                    "opacity 0.5s ease 0.35s, transform 0.5s ease 0.35s",
-                  color: "oklch(0.93 0.008 60)",
-                }}
-              >
-                Message Sent!
-              </h3>
-
-              <p
-                className="text-sm max-w-xs mb-1"
-                style={{
-                  color: "oklch(0.72 0.22 210)",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.1em",
-                  opacity: checkAnimated ? 1 : 0,
-                  transition: "opacity 0.5s ease 0.5s",
-                }}
-              >
-                STATUS: DELIVERED
-              </p>
-
-              <p
-                className="text-muted-foreground text-sm max-w-xs mb-8 mt-3 leading-relaxed"
-                style={{
-                  opacity: checkAnimated ? 1 : 0,
-                  transition: "opacity 0.5s ease 0.6s",
-                }}
-              >
-                Thanks{submittedName ? `, ${submittedName}` : ""}! Your message
-                has been received. I&apos;ll get back to you within{" "}
-                <span style={{ color: "oklch(0.72 0.18 50)" }}>24 hours</span>.
-              </p>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSuccess(false);
-                  setCheckAnimated(false);
-                }}
-                className="font-mono text-xs border-border/50 hover:border-primary/50 hover:text-primary"
-                style={{
-                  opacity: checkAnimated ? 1 : 0,
-                  transition: "opacity 0.5s ease 0.75s",
-                }}
-                data-ocid="btn-send-another"
-              >
-                Send Another Message
-              </Button>
-            </div>
-          ) : (
-            /* ── Contact Form ── */
-            <form
-              onSubmit={handleSubmit}
-              noValidate
-              className="space-y-5 p-7 rounded-2xl border"
-              style={{
-                background: "oklch(0.12 0.014 48)",
-                borderColor: "oklch(0.28 0.018 48 / 0.6)",
-              }}
-              data-ocid="contact-form"
-            >
-              {/* Service Selector */}
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="contact-service"
-                  className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1"
-                >
-                  Service Needed{" "}
-                  <span style={{ color: "oklch(0.65 0.22 25)" }}>*</span>
-                </Label>
-                <div className="relative">
-                  {/* selected service icon indicator */}
-                  {service &&
-                    (() => {
-                      const found = SERVICES.find((s) => s.value === service);
-                      if (!found) return null;
-                      const Icon = found.icon;
-                      return (
-                        <div
-                          className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 flex items-center justify-center w-6 h-6 rounded-md"
-                          style={{
-                            background: `${found.color.replace(")", " / 0.12)")}`,
-                          }}
-                          aria-hidden="true"
-                        >
-                          <Icon size={12} style={{ color: found.color }} />
-                        </div>
-                      );
-                    })()}
-                  <select
-                    id="contact-service"
-                    value={service}
-                    onChange={(e) => handleServiceChange(e.target.value)}
-                    onBlur={() => blurValidate("service", service)}
-                    className="w-full rounded-xl border border-border/40 text-sm transition-smooth appearance-none pr-10 py-2.5 focus:outline-none"
-                    style={{
-                      background: "oklch(0.10 0.012 48)",
-                      color: service
-                        ? "oklch(0.93 0.008 60)"
-                        : "oklch(0.45 0.010 55)",
-                      paddingLeft: service ? "2.75rem" : "0.875rem",
-                      borderColor:
-                        touched.service && errors.service
-                          ? "oklch(0.55 0.22 25 / 0.6)"
-                          : service
-                            ? "oklch(0.72 0.22 210 / 0.55)"
-                            : undefined,
-                      boxShadow: service
-                        ? "0 0 0 1px oklch(0.72 0.22 210 / 0.18)"
-                        : undefined,
-                    }}
-                    data-ocid="select-service"
-                    aria-invalid={touched.service && !!errors.service}
-                  >
-                    <option
-                      value=""
-                      disabled
-                      style={{
-                        color: "oklch(0.45 0.010 55)",
-                        background: "oklch(0.10 0.012 48)",
-                      }}
-                    >
-                      Choose a service…
-                    </option>
-                    {SERVICES.map((s) => (
-                      <option
-                        key={s.value}
-                        value={s.value}
-                        style={{
-                          background: "oklch(0.13 0.014 48)",
-                          color: "oklch(0.88 0.008 60)",
-                        }}
-                      >
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={14}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-smooth"
-                    style={{
-                      color: service
-                        ? "oklch(0.72 0.22 210)"
-                        : "oklch(0.45 0.010 55)",
+                      background:
+                        "conic-gradient(from 0deg, oklch(0.75 0.20 145 / 0.5), oklch(0.72 0.22 210 / 0.5), oklch(0.75 0.20 145 / 0.5))",
+                      padding: "1px",
+                      borderRadius: "9999px",
+                      animation: checkAnimated
+                        ? "ring-rotate-cw 4s linear infinite"
+                        : "none",
                     }}
                     aria-hidden="true"
                   />
-                </div>
-                {touched.service && errors.service && (
-                  <p
-                    className="text-[10px] font-mono flex items-center gap-1"
-                    style={{ color: "oklch(0.65 0.22 25)" }}
-                    role="alert"
-                  >
-                    ⚠ {errors.service}
-                  </p>
-                )}
-              </div>
-
-              {/* Name + Email row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="contact-name"
-                    className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1"
-                  >
-                    Your Name{" "}
-                    <span style={{ color: "oklch(0.65 0.22 25)" }}>*</span>
-                  </Label>
-                  <Input
-                    id="contact-name"
-                    placeholder="Abdullah Hosen"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onBlur={() => blurValidate("name", name)}
-                    className="rounded-xl border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/35 text-sm transition-smooth"
-                    style={{ background: "oklch(0.10 0.012 48)" }}
-                    data-ocid="input-name"
-                    aria-invalid={touched.name && !!errors.name}
-                  />
-                  {touched.name && errors.name && (
-                    <p
-                      className="text-[10px] font-mono flex items-center gap-1"
-                      style={{ color: "oklch(0.65 0.22 25)" }}
-                      role="alert"
-                    >
-                      ⚠ {errors.name}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="contact-email"
-                    className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1"
-                  >
-                    Email Address{" "}
-                    <span style={{ color: "oklch(0.65 0.22 25)" }}>*</span>
-                  </Label>
-                  <Input
-                    id="contact-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onBlur={() => blurValidate("email", email)}
-                    className="rounded-xl border-border/40 focus:border-accent/60 focus:ring-1 focus:ring-accent/20 text-foreground placeholder:text-muted-foreground/35 text-sm transition-smooth"
-                    style={{ background: "oklch(0.10 0.012 48)" }}
-                    data-ocid="input-email"
-                    aria-invalid={touched.email && !!errors.email}
-                  />
-                  {touched.email && errors.email && (
-                    <p
-                      className="text-[10px] font-mono flex items-center gap-1"
-                      style={{ color: "oklch(0.65 0.22 25)" }}
-                      role="alert"
-                    >
-                      ⚠ {errors.email}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Subject */}
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="contact-subject"
-                  className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1"
-                >
-                  Subject{" "}
-                  <span style={{ color: "oklch(0.65 0.22 25)" }}>*</span>
-                </Label>
-                <Input
-                  id="contact-subject"
-                  placeholder="WordPress Speed Optimization Project"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  onBlur={() => blurValidate("subject", subject)}
-                  className="rounded-xl border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/35 text-sm transition-smooth"
-                  style={{ background: "oklch(0.10 0.012 48)" }}
-                  data-ocid="input-subject"
-                  aria-invalid={touched.subject && !!errors.subject}
-                />
-                {touched.subject && errors.subject && (
-                  <p
-                    className="text-[10px] font-mono flex items-center gap-1"
-                    style={{ color: "oklch(0.65 0.22 25)" }}
-                    role="alert"
-                  >
-                    ⚠ {errors.subject}
-                  </p>
-                )}
-              </div>
-
-              {/* Message */}
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="contact-message"
-                  className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1 justify-between"
-                >
-                  <span className="flex items-center gap-1">
-                    Message{" "}
-                    <span style={{ color: "oklch(0.65 0.22 25)" }}>*</span>
-                  </span>
-                  <span
-                    className="normal-case"
+                  <div
+                    className="w-20 h-20 rounded-full flex items-center justify-center relative z-10"
                     style={{
-                      color:
-                        message.trim().length >= 20
-                          ? "oklch(0.72 0.18 50)"
-                          : "oklch(0.48 0.010 55)",
+                      background: "oklch(0.12 0.014 48)",
+                      border: "2px solid oklch(0.75 0.20 145 / 0.40)",
+                      boxShadow: checkAnimated
+                        ? "0 0 30px -5px oklch(0.75 0.20 145 / 0.45)"
+                        : "none",
+                      transition: "box-shadow 0.6s ease",
                     }}
                   >
-                    {message.trim().length}/20 min
-                  </span>
-                </Label>
-                <Textarea
-                  id="contact-message"
-                  placeholder="Tell me about your project — what you need, your timeline, and any specific requirements..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onBlur={() => blurValidate("message", message)}
-                  rows={5}
-                  className="rounded-xl border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/35 resize-none text-sm transition-smooth"
-                  style={{ background: "oklch(0.10 0.012 48)" }}
-                  data-ocid="input-message"
-                  aria-invalid={touched.message && !!errors.message}
-                />
-                {touched.message && errors.message && (
-                  <p
-                    className="text-[10px] font-mono flex items-center gap-1"
-                    style={{ color: "oklch(0.65 0.22 25)" }}
-                    role="alert"
-                  >
-                    ⚠ {errors.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Backend error */}
-              {submitError && (
-                <div
-                  className="px-4 py-3 rounded-xl text-sm font-mono"
-                  style={{
-                    background: "oklch(0.55 0.22 25 / 0.12)",
-                    border: "1px solid oklch(0.55 0.22 25 / 0.3)",
-                    color: "oklch(0.75 0.18 25)",
-                  }}
-                  role="alert"
-                  data-ocid="contact-error"
-                >
-                  ⚠ {submitError}
-                </div>
-              )}
-
-              {/* Submit */}
-              <Button
-                type="submit"
-                disabled={loading || !isValid || isFetching}
-                className="w-full font-display font-semibold tracking-wide gap-2 h-11 rounded-xl transition-smooth disabled:opacity-40"
-                style={
-                  isValid && !loading
-                    ? {
-                        background:
-                          "linear-gradient(135deg, oklch(0.72 0.18 50), oklch(0.68 0.16 38))",
-                        color: "oklch(0.08 0.012 50)",
-                        boxShadow: "0 4px 20px -4px oklch(0.72 0.18 50 / 0.5)",
-                      }
-                    : undefined
-                }
-                data-ocid="btn-submit-contact"
-              >
-                {loading ? (
-                  <>
-                    <span
-                      className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin shrink-0"
+                    <CheckCircle2
+                      size={36}
                       style={{
-                        borderColor: "currentColor",
-                        borderTopColor: "transparent",
+                        color: "oklch(0.75 0.20 145)",
+                        opacity: checkAnimated ? 1 : 0,
+                        transform: checkAnimated ? "scale(1)" : "scale(0.5)",
+                        transition:
+                          "opacity 0.4s ease 0.15s, transform 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s",
+                      }}
+                    />
+                  </div>
+                </div>
+                <h3
+                  className="font-display font-bold text-2xl lg:text-3xl mb-2 tracking-tight"
+                  style={{
+                    opacity: checkAnimated ? 1 : 0,
+                    transform: checkAnimated
+                      ? "translateY(0)"
+                      : "translateY(12px)",
+                    transition:
+                      "opacity 0.5s ease 0.35s, transform 0.5s ease 0.35s",
+                    color: "oklch(0.93 0.008 60)",
+                  }}
+                >
+                  Message Sent!
+                </h3>
+                <p
+                  className="text-sm max-w-xs mb-1"
+                  style={{
+                    color: "oklch(0.72 0.22 210)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.1em",
+                    opacity: checkAnimated ? 1 : 0,
+                    transition: "opacity 0.5s ease 0.5s",
+                  }}
+                >
+                  STATUS: DELIVERED
+                </p>
+                <p
+                  className="text-muted-foreground text-sm max-w-xs mb-8 mt-3 leading-relaxed"
+                  style={{
+                    opacity: checkAnimated ? 1 : 0,
+                    transition: "opacity 0.5s ease 0.6s",
+                  }}
+                >
+                  Thanks{submittedName ? `, ${submittedName}` : ""}! Your
+                  message has been received. I&apos;ll get back to you within{" "}
+                  <span style={{ color: "oklch(0.72 0.18 50)" }}>24 hours</span>
+                  .
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSuccess(false);
+                    setCheckAnimated(false);
+                  }}
+                  className="font-mono text-xs border-border/50 hover:border-primary/50 hover:text-primary"
+                  style={{
+                    opacity: checkAnimated ? 1 : 0,
+                    transition: "opacity 0.5s ease 0.75s",
+                  }}
+                  data-ocid="btn-send-another"
+                >
+                  Send Another Message
+                </Button>
+              </div>
+            ) : (
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                className="space-y-5 p-7 rounded-2xl border"
+                style={{
+                  background: "oklch(0.12 0.014 48)",
+                  borderColor: "oklch(0.28 0.018 48 / 0.6)",
+                }}
+                data-ocid="contact-form"
+              >
+                {/* Service Selector */}
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="contact-service"
+                    className="text-xs lg:text-sm font-accent text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1"
+                  >
+                    Service Needed{" "}
+                    <span style={{ color: "oklch(0.65 0.22 25)" }}>*</span>
+                  </Label>
+                  <div className="relative">
+                    {service &&
+                      (() => {
+                        const found = SERVICES.find((s) => s.value === service);
+                        if (!found) return null;
+                        const Icon = found.icon;
+                        return (
+                          <div
+                            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 flex items-center justify-center w-6 h-6 rounded-md"
+                            style={{
+                              background: `${found.color.replace(")", " / 0.12)")}`,
+                            }}
+                            aria-hidden="true"
+                          >
+                            <Icon size={12} style={{ color: found.color }} />
+                          </div>
+                        );
+                      })()}
+                    <select
+                      id="contact-service"
+                      value={service}
+                      onChange={(e) => handleServiceChange(e.target.value)}
+                      onBlur={() => blurValidate("service", service)}
+                      className="w-full rounded-xl border border-border/40 text-sm lg:text-base transition-smooth appearance-none pr-10 py-2.5 focus:outline-none font-body"
+                      style={{
+                        background: "oklch(0.10 0.012 48)",
+                        color: service
+                          ? "oklch(0.93 0.008 60)"
+                          : "oklch(0.45 0.010 55)",
+                        paddingLeft: service ? "2.75rem" : "0.875rem",
+                        borderColor:
+                          touched.service && errors.service
+                            ? "oklch(0.55 0.22 25 / 0.6)"
+                            : service
+                              ? "oklch(0.72 0.22 210 / 0.55)"
+                              : undefined,
+                        boxShadow: service
+                          ? "0 0 0 1px oklch(0.72 0.22 210 / 0.18)"
+                          : undefined,
+                      }}
+                      data-ocid="select-service"
+                      aria-invalid={touched.service && !!errors.service}
+                    >
+                      <option
+                        value=""
+                        disabled
+                        style={{
+                          color: "oklch(0.45 0.010 55)",
+                          background: "oklch(0.10 0.012 48)",
+                        }}
+                      >
+                        Choose a service…
+                      </option>
+                      {SERVICES.map((s) => (
+                        <option
+                          key={s.value}
+                          value={s.value}
+                          style={{
+                            background: "oklch(0.13 0.014 48)",
+                            color: "oklch(0.88 0.008 60)",
+                          }}
+                        >
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={14}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-smooth"
+                      style={{
+                        color: service
+                          ? "oklch(0.72 0.22 210)"
+                          : "oklch(0.45 0.010 55)",
                       }}
                       aria-hidden="true"
                     />
-                    Sending…
-                  </>
-                ) : (
-                  <>
-                    <Send size={15} aria-hidden="true" /> Send Message
-                  </>
-                )}
-              </Button>
+                  </div>
+                  {touched.service && errors.service && (
+                    <p
+                      className="text-[10px] font-mono flex items-center gap-1"
+                      style={{ color: "oklch(0.65 0.22 25)" }}
+                      role="alert"
+                    >
+                      ⚠ {errors.service}
+                    </p>
+                  )}
+                </div>
 
-              <p
-                className="text-center text-[10px] font-mono"
-                style={{ color: "oklch(0.40 0.008 55)" }}
-              >
-                I respond within 24 hours · No spam, ever
-              </p>
-            </form>
-          )}
+                {/* Name + Email row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="contact-name"
+                      className="text-xs lg:text-sm font-accent text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1"
+                    >
+                      Your Name{" "}
+                      <span style={{ color: "oklch(0.65 0.22 25)" }}>*</span>
+                    </Label>
+                    <Input
+                      id="contact-name"
+                      placeholder="Abdullah Hosen"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      onBlur={() => blurValidate("name", name)}
+                      className="rounded-xl border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/35 text-sm lg:text-base transition-smooth"
+                      style={{ background: "oklch(0.10 0.012 48)" }}
+                      data-ocid="input-name"
+                      aria-invalid={touched.name && !!errors.name}
+                    />
+                    {touched.name && errors.name && (
+                      <p
+                        className="text-[10px] font-mono flex items-center gap-1"
+                        style={{ color: "oklch(0.65 0.22 25)" }}
+                        role="alert"
+                      >
+                        ⚠ {errors.name}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="contact-email"
+                      className="text-xs lg:text-sm font-accent text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1"
+                    >
+                      Email Address{" "}
+                      <span style={{ color: "oklch(0.65 0.22 25)" }}>*</span>
+                    </Label>
+                    <Input
+                      id="contact-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onBlur={() => blurValidate("email", email)}
+                      className="rounded-xl border-border/40 focus:border-accent/60 focus:ring-1 focus:ring-accent/20 text-foreground placeholder:text-muted-foreground/35 text-sm lg:text-base transition-smooth"
+                      style={{ background: "oklch(0.10 0.012 48)" }}
+                      data-ocid="input-email"
+                      aria-invalid={touched.email && !!errors.email}
+                    />
+                    {touched.email && errors.email && (
+                      <p
+                        className="text-[10px] font-mono flex items-center gap-1"
+                        style={{ color: "oklch(0.65 0.22 25)" }}
+                        role="alert"
+                      >
+                        ⚠ {errors.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Subject */}
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="contact-subject"
+                    className="text-xs lg:text-sm font-accent text-muted-foreground uppercase tracking-[0.15em] flex items-center gap-1"
+                  >
+                    Subject{" "}
+                    <span style={{ color: "oklch(0.65 0.22 25)" }}>*</span>
+                  </Label>
+                  <Input
+                    id="contact-subject"
+                    placeholder="WordPress Speed Optimization Project"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    onBlur={() => blurValidate("subject", subject)}
+                    className="rounded-xl border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/35 text-sm lg:text-base transition-smooth"
+                    style={{ background: "oklch(0.10 0.012 48)" }}
+                    data-ocid="input-subject"
+                    aria-invalid={touched.subject && !!errors.subject}
+                  />
+                  {touched.subject && errors.subject && (
+                    <p
+                      className="text-[10px] font-mono flex items-center gap-1"
+                      style={{ color: "oklch(0.65 0.22 25)" }}
+                      role="alert"
+                    >
+                      ⚠ {errors.subject}
+                    </p>
+                  )}
+                </div>
+
+                {/* Message with 500-char limit */}
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="contact-message"
+                    className="text-xs lg:text-sm font-accent text-muted-foreground uppercase tracking-[0.15em] flex items-center justify-between gap-1"
+                  >
+                    <span className="flex items-center gap-1">
+                      Message{" "}
+                      <span style={{ color: "oklch(0.65 0.22 25)" }}>*</span>
+                    </span>
+                  </Label>
+                  <div className="relative">
+                    <Textarea
+                      id="contact-message"
+                      placeholder="Tell me about your project — what you need, your timeline, and any specific requirements..."
+                      value={message}
+                      onChange={(e) => handleMessageChange(e.target.value)}
+                      onBlur={() => {
+                        setTouched((prev) => ({ ...prev, message: true }));
+                        blurValidateMessage(message);
+                      }}
+                      maxLength={MSG_MAX}
+                      rows={5}
+                      className="rounded-xl border-border/40 focus:border-primary/60 focus:ring-1 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground/35 resize-none text-sm lg:text-base transition-smooth"
+                      style={{
+                        background: "oklch(0.10 0.012 48)",
+                        borderColor: msgAtLimit
+                          ? "oklch(0.65 0.22 25 / 0.6)"
+                          : touched.message && errors.message
+                            ? "oklch(0.65 0.22 25 / 0.6)"
+                            : undefined,
+                      }}
+                      data-ocid="input-message"
+                      aria-invalid={touched.message && !!errors.message}
+                    />
+                  </div>
+                  {/* Live counter */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      {touched.message && errors.message && (
+                        <p
+                          className="text-[10px] font-mono flex items-center gap-1"
+                          style={{ color: "oklch(0.65 0.22 25)" }}
+                          role="alert"
+                        >
+                          ⚠ {errors.message}
+                        </p>
+                      )}
+                    </div>
+                    <span
+                      className="font-mono text-[11px] tabular-nums font-semibold transition-colors duration-200"
+                      style={{ color: msgCounterColor }}
+                      aria-live="polite"
+                      data-ocid="msg-char-counter"
+                    >
+                      {msgLen} / {MSG_MAX}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Backend error */}
+                {submitError && (
+                  <div
+                    className="px-4 py-3 rounded-xl text-sm font-mono"
+                    style={{
+                      background: "oklch(0.55 0.22 25 / 0.12)",
+                      border: "1px solid oklch(0.55 0.22 25 / 0.3)",
+                      color: "oklch(0.75 0.18 25)",
+                    }}
+                    role="alert"
+                    data-ocid="contact-error"
+                  >
+                    ⚠ {submitError}
+                  </div>
+                )}
+
+                {/* Submit */}
+                <Button
+                  type="submit"
+                  disabled={loading || !isValid || isFetching}
+                  className="w-full font-accent font-semibold tracking-wide gap-2 h-12 rounded-xl transition-smooth disabled:opacity-40 text-base lg:text-lg"
+                  style={
+                    isValid && !loading
+                      ? {
+                          background:
+                            "linear-gradient(135deg, oklch(0.72 0.18 50), oklch(0.68 0.16 38))",
+                          color: "oklch(0.08 0.012 50)",
+                          boxShadow:
+                            "0 4px 20px -4px oklch(0.72 0.18 50 / 0.5)",
+                        }
+                      : undefined
+                  }
+                  data-ocid="btn-submit-contact"
+                >
+                  {loading ? (
+                    <>
+                      <span
+                        className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin shrink-0"
+                        style={{
+                          borderColor: "currentColor",
+                          borderTopColor: "transparent",
+                        }}
+                        aria-hidden="true"
+                      />
+                      Sending…
+                    </>
+                  ) : (
+                    <>
+                      <Send size={15} aria-hidden="true" /> Send Message
+                    </>
+                  )}
+                </Button>
+
+                <p
+                  className="text-center text-xs font-accent"
+                  style={{ color: "oklch(0.40 0.008 55)" }}
+                >
+                  I respond within 24 hours · No spam, ever
+                </p>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </section>

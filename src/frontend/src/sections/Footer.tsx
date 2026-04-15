@@ -102,7 +102,7 @@ export function Footer() {
         />
 
         <div
-          className={`px-8 md:px-12 pb-7 reveal-fade-up ${visible ? "revealed" : ""}`}
+          className={`px-8 md:px-12 pb-7 max-w-6xl mx-auto reveal-fade-up ${visible ? "revealed" : ""}`}
         >
           {/* Top row: brand + nav + social */}
           <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-8 mb-10">
@@ -110,13 +110,13 @@ export function Footer() {
             <div className="flex flex-col items-center lg:items-start gap-2 shrink-0">
               <a
                 href="#home"
-                className="font-display font-bold text-2xl gradient-gold-cyan transition-smooth hover:opacity-80"
+                className="font-display font-bold text-2xl lg:text-3xl gradient-gold-cyan transition-smooth hover:opacity-80 tracking-tight"
                 aria-label="Back to top"
               >
                 Abdullah Hosen
               </a>
               <span
-                className="text-xs font-mono"
+                className="text-xs lg:text-sm font-accent"
                 style={{ color: "oklch(0.50 0.010 55)" }}
               >
                 WordPress Developer &amp; Frontend Engineer
@@ -127,7 +127,7 @@ export function Footer() {
                   style={{ background: "oklch(0.75 0.20 145)" }}
                 />
                 <span
-                  className="text-[10px] font-mono"
+                  className="text-xs font-accent"
                   style={{ color: "oklch(0.75 0.20 145)" }}
                 >
                   Available for Freelance
@@ -144,7 +144,7 @@ export function Footer() {
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-muted-foreground hover:text-primary text-xs font-mono uppercase tracking-wider transition-smooth relative group"
+                  className="text-muted-foreground hover:text-primary text-xs lg:text-sm font-accent uppercase tracking-wider transition-smooth relative group"
                   data-ocid={`footer-nav-${link.label.toLowerCase()}`}
                 >
                   {link.label}
@@ -193,13 +193,13 @@ export function Footer() {
           {/* Bottom row: copyright */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p
-              className="text-center text-[11px] font-mono"
+              className="text-center text-xs font-accent"
               style={{ color: "oklch(0.40 0.008 55)" }}
             >
               © {year} Abdullah Hosen. All rights reserved.
             </p>
             <p
-              className="text-center text-[11px] font-mono"
+              className="text-center text-xs font-accent"
               style={{ color: "oklch(0.40 0.008 55)" }}
             >
               Built with love using{" "}

@@ -125,12 +125,12 @@ function StatCard({ label, value, icon: Icon, accent }: StatCardProps) {
       </div>
       <div>
         <p
-          className="text-[10px] font-mono uppercase tracking-[0.15em] mb-0.5"
+          className="text-xs font-accent uppercase tracking-[0.15em] mb-0.5"
           style={{ color: "oklch(0.50 0.010 55)" }}
         >
           {label}
         </p>
-        <p className="font-display font-bold text-2xl text-foreground leading-none">
+        <p className="font-display font-bold text-2xl lg:text-3xl text-foreground leading-none tracking-tight">
           {value}
         </p>
       </div>
@@ -172,10 +172,10 @@ export function AdminDashboard() {
     <div className="space-y-8" data-ocid="admin-dashboard">
       {/* Header */}
       <div>
-        <h1 className="font-display font-bold text-2xl text-foreground mb-1">
+        <h1 className="font-display font-bold text-2xl lg:text-3xl text-foreground mb-1 tracking-tight">
           Dashboard
         </h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground text-sm lg:text-base font-body">
           Overview of your portfolio activity
         </p>
       </div>

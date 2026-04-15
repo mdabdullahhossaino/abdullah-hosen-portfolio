@@ -63,13 +63,13 @@ function StatCard({
         }}
       />
       <div
-        className="font-mono font-bold text-3xl mb-1 relative z-10"
+        className="font-mono font-bold text-3xl lg:text-4xl mb-1 relative z-10"
         style={{ color }}
       >
         {count}
         <span>{suffix}</span>
       </div>
-      <p className="text-muted-foreground text-xs font-mono uppercase tracking-wider relative z-10">
+      <p className="text-muted-foreground text-xs lg:text-sm font-accent uppercase tracking-wider relative z-10">
         {label}
       </p>
     </div>
@@ -83,15 +83,14 @@ const STATS = [
   { value: 100, suffix: "%", label: "Satisfaction Rate", accentGold: false },
 ];
 
-const SKILL_TAGS = [
-  "WordPress",
-  "PHP",
-  "React",
-  "JavaScript",
-  "CSS/SASS",
-  "Figma",
-  "SEO",
-  "Performance",
+// Expertise tags — NO SEO, includes WooCommerce, Malware Removal, Web Security
+const EXPERTISE_TAGS = [
+  { label: "WordPress Development", gold: true },
+  { label: "Web Security", gold: false },
+  { label: "Speed Optimization", gold: true },
+  { label: "Bug Fixing", gold: false },
+  { label: "Malware Removal", gold: true },
+  { label: "WooCommerce", gold: false },
 ];
 
 export function About() {
@@ -115,7 +114,7 @@ export function About() {
         }}
       />
 
-      <div ref={sectionRef} className="relative z-10 max-w-5xl mx-auto">
+      <div ref={sectionRef} className="relative z-10 max-w-6xl mx-auto px-0">
         {/* Section label */}
         <div
           style={{
@@ -126,7 +125,7 @@ export function About() {
           className="mb-12"
         >
           <span
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono uppercase tracking-widest mb-4"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs lg:text-sm font-accent font-semibold uppercase tracking-widest mb-4"
             style={{
               background: "oklch(0.72 0.22 210 / 0.12)",
               color: "oklch(0.72 0.22 210)",
@@ -151,8 +150,8 @@ export function About() {
         </div>
 
         {/* Two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-14">
-          {/* LEFT — profile image */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center mb-14">
+          {/* LEFT — Large profile image */}
           <div
             style={{
               opacity: sectionVisible ? 1 : 0,
@@ -162,29 +161,53 @@ export function About() {
             }}
             className="flex justify-center lg:justify-start"
           >
-            <div className="relative">
+            <div className="relative group">
+              {/* Conic gradient glow border */}
               <div
-                className="absolute -inset-3 rounded-2xl pointer-events-none"
+                className="absolute -inset-[3px] rounded-2xl pointer-events-none"
                 style={{
                   background:
-                    "conic-gradient(from 0deg, oklch(0.72 0.18 50 / 0.35), oklch(0.72 0.22 210 / 0.35), oklch(0.72 0.18 50 / 0.35))",
-                  filter: "blur(10px)",
+                    "conic-gradient(from 0deg, oklch(0.72 0.18 50 / 0.7), oklch(0.72 0.22 210 / 0.5), oklch(0.72 0.18 50 / 0.7))",
+                  filter: "blur(2px)",
+                  animation: "ring-rotate-cw 8s linear infinite",
+                  borderRadius: "1rem",
                 }}
                 aria-hidden="true"
               />
+              {/* Outer glow */}
               <div
-                className="relative w-64 h-72 md:w-72 md:h-80 rounded-2xl overflow-hidden border border-border/30 profile-card"
-                style={{ background: "oklch(0.13 0.016 48)" }}
+                className="absolute -inset-6 rounded-3xl pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at center, oklch(0.72 0.18 50 / 0.18) 0%, oklch(0.72 0.22 210 / 0.10) 45%, transparent 70%)",
+                  filter: "blur(12px)",
+                }}
+                aria-hidden="true"
+              />
+              {/* Image container — significantly enlarged */}
+              <div
+                className="relative w-full overflow-hidden rounded-2xl profile-card"
+                style={{
+                  width: "clamp(280px, 40vw, 420px)",
+                  aspectRatio: "4/5",
+                  background: "oklch(0.13 0.016 48)",
+                  border: "1px solid oklch(0.28 0.018 48 / 0.5)",
+                  boxShadow:
+                    "0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px oklch(0.72 0.18 50 / 0.15)",
+                }}
               >
                 <img
-                  src="/assets/generated/profile-avatar.dim_400x400.jpg"
-                  alt="Abdullah Hosen — Expert WordPress Developer & Frontend Engineer"
-                  className="w-full h-full object-cover object-top"
+                  src="/assets/profile-ai.png"
+                  alt="Abdullah Hosen — AI portrait"
+                  className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
                   onError={(e) => {
                     const el = e.currentTarget as HTMLImageElement;
-                    el.style.display = "none";
-                    const fallback = el.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = "flex";
+                    el.src = "/assets/generated/profile-avatar.dim_400x400.jpg";
+                    el.onerror = () => {
+                      el.style.display = "none";
+                      const fallback = el.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = "flex";
+                    };
                   }}
                 />
                 <div
@@ -193,18 +216,18 @@ export function About() {
                 >
                   AH
                 </div>
+                {/* Hover glow overlay */}
                 <div
-                  className="absolute inset-0 rounded-2xl opacity-0 profile-card-glow pointer-events-none"
+                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-500"
                   style={{
                     boxShadow:
-                      "inset 0 0 0 2px oklch(0.72 0.18 50 / 0.6), 0 0 30px -5px oklch(0.72 0.18 50 / 0.4)",
-                    transition: "opacity 0.3s ease",
+                      "inset 0 0 0 2px oklch(0.72 0.18 50 / 0.5), inset 0 -60px 60px -20px oklch(0.72 0.18 50 / 0.15)",
                   }}
                 />
               </div>
               {/* Available badge */}
               <div
-                className="absolute -bottom-2 -right-2 px-3 py-1.5 rounded-full border border-border/40 bg-card/90 backdrop-blur-sm flex items-center gap-1.5"
+                className="absolute -bottom-3 -right-3 px-3 py-1.5 rounded-full border border-border/40 bg-card/95 backdrop-blur-sm flex items-center gap-1.5"
                 style={{ boxShadow: "0 0 16px -4px oklch(0.72 0.18 50 / 0.4)" }}
               >
                 <span
@@ -218,6 +241,25 @@ export function About() {
                   style={{ background: "oklch(0.72 0.55 145)" }}
                 />
               </div>
+              {/* Decorative corner accent */}
+              <div
+                className="absolute -top-2 -left-2 w-8 h-8 rounded-tl-xl pointer-events-none"
+                style={{
+                  border: "2px solid oklch(0.72 0.22 210 / 0.6)",
+                  borderRight: "none",
+                  borderBottom: "none",
+                }}
+                aria-hidden="true"
+              />
+              <div
+                className="absolute -bottom-2 -right-2 w-8 h-8 rounded-br-xl pointer-events-none"
+                style={{
+                  border: "2px solid oklch(0.72 0.18 50 / 0.6)",
+                  borderLeft: "none",
+                  borderTop: "none",
+                }}
+                aria-hidden="true"
+              />
             </div>
           </div>
 
@@ -231,12 +273,12 @@ export function About() {
             }}
           >
             <p
-              className="font-mono text-xs uppercase tracking-widest mb-5"
+              className="font-accent text-xs lg:text-sm uppercase tracking-widest mb-5"
               style={{ color: "oklch(0.55 0.012 55)" }}
             >
               Based in Bangladesh · Open to Remote
             </p>
-            <p className="text-muted-foreground leading-relaxed mb-4">
+            <p className="text-muted-foreground leading-[1.8] mb-4 text-base lg:text-lg font-body">
               I'm{" "}
               <span className="text-foreground font-semibold">
                 Abdullah Hosen
@@ -246,41 +288,55 @@ export function About() {
               in building high-performance, visually stunning websites that
               drive real business results.
             </p>
-            <p className="text-muted-foreground leading-relaxed mb-7">
+            <p className="text-muted-foreground leading-[1.8] mb-7 text-base lg:text-lg font-body">
               My expertise spans custom WordPress theme development, plugin
               integration, frontend design systems, security hardening, and AI
               automation integration. I'm dedicated to delivering pixel-perfect
               solutions that exceed client expectations every time.
             </p>
 
-            {/* Skill tags */}
-            <div className="flex flex-wrap gap-2 mb-8">
-              {SKILL_TAGS.map((tag, i) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 text-xs font-mono rounded-full skill-tag"
-                  style={{
-                    background:
-                      i % 2 === 0
+            {/* Expertise specialization tags */}
+            <div className="mb-6">
+              <p
+                className="text-xs lg:text-sm font-accent uppercase tracking-[0.18em] mb-3"
+                style={{ color: "oklch(0.55 0.012 55)" }}
+              >
+                Specializations
+              </p>
+              <div className="flex flex-wrap gap-2 mb-8">
+                {EXPERTISE_TAGS.map((tag) => (
+                  <span
+                    key={tag.label}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs lg:text-sm font-accent rounded-full expertise-tag"
+                    style={{
+                      background: tag.gold
                         ? "oklch(0.72 0.18 50 / 0.10)"
                         : "oklch(0.72 0.22 210 / 0.10)",
-                    color:
-                      i % 2 === 0
+                      color: tag.gold
                         ? "oklch(0.72 0.18 50)"
                         : "oklch(0.72 0.22 210)",
-                    border: `1px solid ${i % 2 === 0 ? "oklch(0.72 0.18 50 / 0.25)" : "oklch(0.72 0.22 210 / 0.25)"}`,
-                    transition: "all 0.25s ease",
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
+                      border: `1px solid ${tag.gold ? "oklch(0.72 0.18 50 / 0.28)" : "oklch(0.72 0.22 210 / 0.28)"}`,
+                      transition: "all 0.25s ease",
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{
+                        background: tag.gold
+                          ? "oklch(0.72 0.18 50)"
+                          : "oklch(0.72 0.22 210)",
+                      }}
+                    />
+                    {tag.label}
+                  </span>
+                ))}
+              </div>
             </div>
 
             <Button
               asChild
               size="lg"
-              className="font-display font-semibold gap-2"
+              className="font-accent font-semibold gap-2 text-base lg:text-lg px-7 py-3.5"
               style={{
                 background:
                   "linear-gradient(135deg, oklch(0.72 0.18 50), oklch(0.65 0.16 45))",
@@ -316,8 +372,7 @@ export function About() {
       </div>
 
       <style>{`
-        .profile-card:hover .profile-card-glow { opacity: 1 !important; }
-        .skill-tag:hover { transform: translateY(-2px); filter: brightness(1.15); }
+        .expertise-tag:hover { transform: translateY(-2px); filter: brightness(1.15); }
         .stat-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
         .stat-card:hover { transform: translateY(-6px) !important; }
       `}</style>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -22,16 +23,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { useActor } from "@caffeineai/core-infrastructure";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
+  Download,
   Edit2,
   FolderOpen,
   ImageIcon,
   Loader2,
   Plus,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 const CATEGORIES = [
   "WordPress",
@@ -65,6 +70,38 @@ const CATEGORY_COLORS: Record<string, string> = {
   AI: "oklch(0.70 0.20 300)",
 };
 
+// ── Excel export helper ────────────────────────────────────────────────────
+function exportProjectsToExcel(projects: Project[]) {
+  const rows = projects.map((p) => ({
+    ID: String(p.id),
+    Title: p.title,
+    Category: p.category,
+    Description: p.description,
+    "Image URLs": p.imageUrls.join(";"),
+    "Created Date": new Date(Number(p.createdAt) / 1_000_000)
+      .toISOString()
+      .split("T")[0],
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  // Column widths
+  ws["!cols"] = [
+    { wch: 20 },
+    { wch: 40 },
+    { wch: 14 },
+    { wch: 60 },
+    { wch: 80 },
+    { wch: 14 },
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Projects");
+
+  const today = new Date().toISOString().split("T")[0];
+  XLSX.writeFile(wb, `projects-export-${today}.xlsx`);
+}
+
 // ── Image upload input ─────────────────────────────────────────────────────
 function ImageUploadArea({
   images,
@@ -84,7 +121,6 @@ function ImageUploadArea({
     if (!files) return;
     setLocalUploading(true);
     for (const file of Array.from(files)) {
-      // Use object URL for preview; in production this would use object-storage extension
       const url = URL.createObjectURL(file);
       onAdd(url);
     }
@@ -153,17 +189,85 @@ function ImageUploadArea({
   );
 }
 
+// ── Delete confirm dialog ──────────────────────────────────────────────────
+function DeleteConfirmDialog({
+  open,
+  projectTitle,
+  onConfirm,
+  onCancel,
+  deleting,
+}: {
+  open: boolean;
+  projectTitle: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  deleting: boolean;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
+      <DialogContent
+        className="max-w-sm border"
+        style={{
+          background: "oklch(0.14 0.015 48)",
+          borderColor: "oklch(0.28 0.018 48 / 0.6)",
+        }}
+        data-ocid="delete-confirm-dialog"
+      >
+        <DialogHeader>
+          <DialogTitle className="font-display text-foreground flex items-center gap-2">
+            <AlertTriangle size={18} style={{ color: "oklch(0.65 0.22 25)" }} />
+            Delete Project
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          Are you sure you want to delete{" "}
+          <span className="text-foreground font-semibold">
+            "{projectTitle}"
+          </span>
+          ? This cannot be undone.
+        </p>
+        <DialogFooter className="gap-2 sm:gap-2 pt-2">
+          <Button
+            variant="outline"
+            className="flex-1 border-border/40"
+            onClick={onCancel}
+            disabled={deleting}
+            data-ocid="delete-cancel-button"
+          >
+            Cancel
+          </Button>
+          <Button
+            className="flex-1 gap-2"
+            onClick={onConfirm}
+            disabled={deleting}
+            style={{
+              background: "oklch(0.50 0.22 25)",
+              color: "oklch(0.93 0.008 25)",
+            }}
+            data-ocid="delete-confirm-button"
+          >
+            {deleting ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <Trash2 size={13} />
+            )}
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Project card ───────────────────────────────────────────────────────────
 function ProjectCard({
   project,
   onEdit,
-  onDelete,
-  deleting,
+  onDeleteRequest,
 }: {
   project: Project;
   onEdit: () => void;
-  onDelete: () => void;
-  deleting: boolean;
+  onDeleteRequest: () => void;
 }) {
   const color = CATEGORY_COLORS[project.category] ?? "oklch(0.72 0.18 50)";
   const thumb = project.imageUrls[0];
@@ -241,17 +345,13 @@ function ProjectCard({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 rounded-lg hover:bg-destructive/10 hover:text-destructive"
-            onClick={onDelete}
-            disabled={deleting}
+            className="h-8 gap-1.5 px-3 text-xs rounded-lg hover:bg-destructive/10 hover:text-destructive"
+            onClick={onDeleteRequest}
             aria-label="Delete project"
             data-ocid={`btn-delete-project-${String(project.id)}`}
           >
-            {deleting ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <Trash2 size={12} />
-            )}
+            <Trash2 size={12} />
+            Delete
           </Button>
         </div>
       </div>
@@ -422,17 +522,79 @@ function ProjectModal({
   );
 }
 
+// ── Import progress banner ────────────────────────────────────────────────
+function ImportProgress({
+  current,
+  total,
+}: {
+  current: number;
+  total: number;
+}) {
+  const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+  return (
+    <div
+      className="rounded-xl border px-4 py-3 flex items-center gap-4"
+      style={{
+        background: "oklch(0.14 0.018 210 / 0.5)",
+        borderColor: "oklch(0.72 0.22 210 / 0.4)",
+      }}
+      data-ocid="import-progress"
+    >
+      <Loader2
+        size={16}
+        className="animate-spin shrink-0"
+        style={{ color: "oklch(0.72 0.22 210)" }}
+      />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-display text-foreground">
+          Importing {current} of {total} projects…
+        </p>
+        <div
+          className="mt-1.5 h-1.5 rounded-full overflow-hidden"
+          style={{ background: "oklch(0.22 0.016 48)" }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-300"
+            style={{
+              width: `${pct}%`,
+              background:
+                "linear-gradient(90deg, oklch(0.72 0.22 210), oklch(0.72 0.18 50))",
+            }}
+          />
+        </div>
+      </div>
+      <span
+        className="font-mono text-xs shrink-0"
+        style={{ color: "oklch(0.72 0.22 210)" }}
+      >
+        {pct}%
+      </span>
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 export function AdminProjects() {
   const token = localStorage.getItem("admin_token") ?? "";
   const { actor, isFetching: actorLoading } = useActor(createActor);
   const qc = useQueryClient();
 
+  const importFileRef = useRef<HTMLInputElement>(null);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<
     (ProjectFormState & { id?: bigint }) | null
   >(null);
-  const [deletingId, setDeletingId] = useState<bigint | null>(null);
+
+  // Delete confirm state
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  // Import state
+  const [importProgress, setImportProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
 
   const { data: projects = [], isLoading } = useQuery<Project[]>({
     queryKey: ["projects"],
@@ -490,7 +652,8 @@ export function AdminProjects() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["projects"] });
       toast.success("Project deleted");
-      setDeletingId(null);
+      setConfirmDeleteOpen(false);
+      setDeleteTarget(null);
     },
     onError: () => toast.error("Failed to delete project"),
   });
@@ -518,9 +681,105 @@ export function AdminProjects() {
     }
   }
 
-  function handleDelete(id: bigint) {
-    setDeletingId(id);
-    deleteMutation.mutate(id);
+  function requestDelete(project: Project) {
+    setDeleteTarget(project);
+    setConfirmDeleteOpen(true);
+  }
+
+  function confirmDelete() {
+    if (deleteTarget) {
+      deleteMutation.mutate(deleteTarget.id);
+    }
+  }
+
+  // ── Excel export ───────────────────────────────────────────────────────
+  function handleExport() {
+    if (projects.length === 0) {
+      toast.info("No projects to export");
+      return;
+    }
+    exportProjectsToExcel(projects);
+    toast.success(`Exported ${projects.length} projects to Excel`);
+  }
+
+  // ── Excel import ───────────────────────────────────────────────────────
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Reset input so same file can be re-imported
+    e.target.value = "";
+    if (!file || !actor) return;
+
+    let rows: Record<string, string>[] = [];
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const wb = XLSX.read(arrayBuffer, { type: "array" });
+      const wsName = wb.SheetNames[0];
+      const ws = wb.Sheets[wsName];
+      rows = XLSX.utils.sheet_to_json<Record<string, string>>(ws, {
+        defval: "",
+      });
+    } catch {
+      toast.error(
+        "Failed to parse file. Please use the exported Excel format.",
+      );
+      return;
+    }
+
+    // Filter valid rows
+    const valid = rows.filter(
+      (r) => (r.Title ?? "").trim() && (r.Category ?? "").trim(),
+    );
+
+    if (valid.length === 0) {
+      toast.warning(
+        "No valid rows found. Make sure columns match: Title, Category, Description, Image URLs",
+      );
+      return;
+    }
+
+    setImportProgress({ current: 0, total: valid.length });
+    let imported = 0;
+
+    for (let i = 0; i < valid.length; i++) {
+      const r = valid[i];
+      const title = (r.Title ?? "").trim();
+      const category = (r.Category ?? "WordPress").trim();
+      const description = (r.Description ?? "").trim();
+      const rawUrls = (r["Image URLs"] ?? "").trim();
+      const imageUrls = rawUrls
+        ? rawUrls
+            .split(";")
+            .map((u) => u.trim())
+            .filter(Boolean)
+        : [];
+
+      try {
+        await actor.createProject(
+          token,
+          title,
+          description,
+          category,
+          imageUrls,
+        );
+        imported++;
+      } catch {
+        // skip failed rows
+      }
+
+      setImportProgress({ current: i + 1, total: valid.length });
+    }
+
+    await qc.invalidateQueries({ queryKey: ["projects"] });
+    setImportProgress(null);
+
+    if (imported > 0) {
+      toast.success(
+        `${imported} project${imported !== 1 ? "s" : ""} imported successfully!`,
+      );
+    } else {
+      toast.error("Import failed — no projects were created.");
+    }
   }
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -529,7 +788,7 @@ export function AdminProjects() {
   return (
     <div className="space-y-6" data-ocid="admin-projects">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <h1 className="font-display font-bold text-2xl text-foreground mb-1">
             Projects
@@ -539,21 +798,83 @@ export function AdminProjects() {
             shown on public portfolio
           </p>
         </div>
-        <Button
-          onClick={openCreate}
-          className="gap-2 font-display shrink-0"
-          style={{
-            background:
-              "linear-gradient(135deg, oklch(0.72 0.18 50), oklch(0.68 0.16 38))",
-            color: "oklch(0.08 0.012 50)",
-            boxShadow: "0 4px 20px -4px oklch(0.72 0.18 50 / 0.5)",
-          }}
-          data-ocid="btn-add-project"
-        >
-          <Plus size={15} />
-          Add Project
-        </Button>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {/* Export Excel */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-xs font-display border"
+            style={{
+              borderColor: "oklch(0.72 0.18 50 / 0.5)",
+              color: "oklch(0.72 0.18 50)",
+              background: "oklch(0.72 0.18 50 / 0.07)",
+            }}
+            onClick={handleExport}
+            disabled={projects.length === 0 || !!importProgress}
+            data-ocid="btn-export-excel"
+          >
+            <Download size={13} />
+            Export Excel
+          </Button>
+
+          {/* Import Excel */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-xs font-display border"
+            style={{
+              borderColor: "oklch(0.72 0.22 210 / 0.5)",
+              color: "oklch(0.72 0.22 210)",
+              background: "oklch(0.72 0.22 210 / 0.07)",
+            }}
+            onClick={() => importFileRef.current?.click()}
+            disabled={!!importProgress || actorLoading}
+            data-ocid="btn-import-excel"
+          >
+            {importProgress ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <Upload size={13} />
+            )}
+            Import Excel
+          </Button>
+          <input
+            ref={importFileRef}
+            type="file"
+            accept=".xlsx,.csv"
+            className="hidden"
+            onChange={handleImportFile}
+            data-ocid="input-import-file"
+          />
+
+          {/* Add Project */}
+          <Button
+            onClick={openCreate}
+            size="sm"
+            className="gap-2 font-display"
+            style={{
+              background:
+                "linear-gradient(135deg, oklch(0.72 0.18 50), oklch(0.68 0.16 38))",
+              color: "oklch(0.08 0.012 50)",
+              boxShadow: "0 4px 20px -4px oklch(0.72 0.18 50 / 0.5)",
+            }}
+            data-ocid="btn-add-project"
+          >
+            <Plus size={14} />
+            Add Project
+          </Button>
+        </div>
       </div>
+
+      {/* Import progress */}
+      {importProgress && (
+        <ImportProgress
+          current={importProgress.current}
+          total={importProgress.total}
+        />
+      )}
 
       {/* Grid */}
       {isLoading ? (
@@ -576,20 +897,37 @@ export function AdminProjects() {
             No projects yet
           </p>
           <p className="text-muted-foreground text-sm mb-6">
-            Add your first project to showcase your work
+            Add your first project or import from Excel
           </p>
-          <Button
-            onClick={openCreate}
-            className="gap-2 font-display"
-            style={{
-              background:
-                "linear-gradient(135deg, oklch(0.72 0.18 50), oklch(0.68 0.16 38))",
-              color: "oklch(0.08 0.012 50)",
-            }}
-          >
-            <Plus size={14} />
-            Add First Project
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 font-display border"
+              style={{
+                borderColor: "oklch(0.72 0.22 210 / 0.5)",
+                color: "oklch(0.72 0.22 210)",
+              }}
+              onClick={() => importFileRef.current?.click()}
+              data-ocid="btn-import-excel-empty"
+            >
+              <Upload size={13} />
+              Import Excel
+            </Button>
+            <Button
+              onClick={openCreate}
+              className="gap-2 font-display"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.72 0.18 50), oklch(0.68 0.16 38))",
+                color: "oklch(0.08 0.012 50)",
+              }}
+              data-ocid="btn-add-project-empty"
+            >
+              <Plus size={14} />
+              Add First Project
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -598,14 +936,13 @@ export function AdminProjects() {
               key={String(p.id)}
               project={p}
               onEdit={() => openEdit(p)}
-              onDelete={() => handleDelete(p.id)}
-              deleting={deletingId === p.id && deleteMutation.isPending}
+              onDeleteRequest={() => requestDelete(p)}
             />
           ))}
         </div>
       )}
 
-      {/* Modal */}
+      {/* Create / Edit modal */}
       {(modalOpen || editing !== null) && (
         <ProjectModal
           open={modalOpen || editing !== null}
@@ -618,6 +955,18 @@ export function AdminProjects() {
           saving={isSaving}
         />
       )}
+
+      {/* Delete confirm dialog */}
+      <DeleteConfirmDialog
+        open={confirmDeleteOpen}
+        projectTitle={deleteTarget?.title ?? ""}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setConfirmDeleteOpen(false);
+          setDeleteTarget(null);
+        }}
+        deleting={deleteMutation.isPending}
+      />
     </div>
   );
 }

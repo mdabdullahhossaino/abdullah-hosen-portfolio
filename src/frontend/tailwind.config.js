@@ -68,8 +68,9 @@ export default {
         },
       },
       fontFamily: {
-        display: ["var(--font-display)", "serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
         body: ["var(--font-body)", "sans-serif"],
+        accent: ["var(--font-accent)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "monospace"],
       },
       borderRadius: {

@@ -4,6 +4,8 @@ import { AdminDashboard } from "@/admin/AdminDashboard";
 import { AdminLayout } from "@/admin/AdminLayout";
 import { AdminLogin } from "@/admin/AdminLogin";
 import { AdminProjects } from "@/admin/AdminProjects";
+import { ConfettiCelebration } from "@/components/ConfettiCelebration";
+import { GlobalClickEffect } from "@/components/GlobalClickEffect";
 import { MobileHeader } from "@/components/MobileHeader";
 import { Sidebar } from "@/components/Sidebar";
 import { About } from "@/sections/About";
@@ -26,6 +28,7 @@ import {
 function PortfolioPage() {
   return (
     <div className="dark min-h-screen bg-background text-foreground">
+      <ConfettiCelebration />
       <Sidebar />
       <MobileHeader />
       <main
@@ -112,6 +115,7 @@ declare module "@tanstack/react-router" {
 export default function App() {
   return (
     <AdminProvider>
+      <GlobalClickEffect />
       <RouterProvider router={router} />
     </AdminProvider>
   );

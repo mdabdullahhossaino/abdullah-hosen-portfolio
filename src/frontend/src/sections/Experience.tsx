@@ -153,16 +153,18 @@ function TimelineColumn({
               el.style.boxShadow = "none";
             }}
           >
-            <span className="block text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1">
+            <span className="block text-xs lg:text-sm font-accent uppercase tracking-widest text-muted-foreground mb-1">
               {item.period}
             </span>
-            <h3 className="font-display font-semibold text-sm text-foreground leading-snug mb-0.5">
+            <h3 className="font-display font-semibold text-base lg:text-lg text-foreground leading-snug mb-0.5 tracking-tight">
               {item.title}
             </h3>
-            <p className={`text-xs font-mono mb-2 ${orgColorClass}`}>
+            <p
+              className={`text-sm lg:text-base font-accent mb-2 ${orgColorClass}`}
+            >
               {item.org}
             </p>
-            <p className="text-muted-foreground text-xs leading-relaxed">
+            <p className="text-muted-foreground text-sm lg:text-base leading-[1.75] font-body">
               {item.description}
             </p>
           </div>
@@ -194,7 +196,7 @@ export function Experience() {
   return (
     <section
       id="experience"
-      className="relative section-pad border-b border-border/30 overflow-hidden"
+      className="relative section-pad border-b border-border/30 overflow-hidden ambient-bg"
       style={{ background: "oklch(0.12 0.015 48)" }}
       data-ocid="section-experience"
     >
@@ -208,11 +210,11 @@ export function Experience() {
         }}
       />
 
-      <div className="relative z-10 max-w-5xl mx-auto">
+      <div className="relative z-10 max-w-6xl mx-auto">
         {/* Section header */}
         <div ref={headingRef} className="reveal-fade-up mb-12">
           <span
-            className="inline-block px-3 py-1 rounded-full text-[11px] font-mono uppercase tracking-widest mb-3"
+            className="inline-block px-3 py-1 rounded-full text-xs lg:text-sm font-accent font-semibold uppercase tracking-widest mb-3"
             style={{
               background: "oklch(0.72 0.18 50 / 0.12)",
               color: "oklch(0.72 0.18 50)",
@@ -247,7 +249,7 @@ export function Experience() {
               >
                 💼
               </span>
-              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+              <p className="text-xs lg:text-sm font-accent uppercase tracking-widest text-muted-foreground">
                 Work Experience
               </p>
             </div>
@@ -267,7 +269,7 @@ export function Experience() {
               >
                 🎓
               </span>
-              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+              <p className="text-xs lg:text-sm font-accent uppercase tracking-widest text-muted-foreground">
                 Education &amp; Certifications
               </p>
             </div>

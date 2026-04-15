@@ -1,12 +1,15 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Outfit:wght@300;400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --font-display: "Space Grotesk";
-    --font-body: "DM Sans";
-    --font-mono: "JetBrains Mono";
+    --font-display: "Playfair Display", Georgia, serif;
+    --font-body: "DM Sans", system-ui, sans-serif;
+    --font-accent: "Outfit", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
     --radius: 0.5rem;
 
     --background: 0.1 0.012 48;
@@ -136,13 +139,6 @@
 /* ── Web Fonts ─────────────────────────────────────────────────────────────── */
 
 @font-face {
-  font-family: "Space Grotesk";
-  src: url("/assets/fonts/SpaceGrotesk.woff2") format("woff2");
-  font-display: swap;
-  font-weight: 300 700;
-}
-
-@font-face {
   font-family: "DM Sans";
   src: url("/assets/fonts/DMSans.woff2") format("woff2");
   font-display: swap;
@@ -215,22 +211,40 @@
     background: oklch(var(--accent) / 0.65);
   }
 
-  /* ── Section utilities ─────────────────────────────────────────────────── */
   .section-pad {
     @apply py-20 px-8 md:px-12;
   }
 
   .section-heading {
-    @apply font-display font-bold text-3xl md:text-4xl mb-3;
+    @apply font-display font-bold text-4xl md:text-5xl lg:text-6xl mb-3 tracking-tight leading-[1.08];
+    font-feature-settings: "liga" 1, "kern" 1;
   }
 
   .section-subheading {
-    @apply text-muted-foreground text-base mb-10;
+    @apply text-muted-foreground text-base md:text-lg lg:text-xl mb-10 leading-relaxed;
   }
 
   /* ── Typography ────────────────────────────────────────────────────────── */
   .hero-headline {
-    @apply font-display font-bold text-4xl md:text-6xl leading-tight;
+    @apply font-display font-bold text-5xl md:text-7xl lg:text-8xl leading-[1.06] tracking-tight;
+    font-feature-settings: "liga" 1, "kern" 1;
+  }
+
+  /* ── Section eyebrow labels ──────────────────────────────────────────── */
+  .section-eyebrow {
+    @apply font-accent text-xs lg:text-sm font-semibold uppercase tracking-[0.14em];
+  }
+
+  /* ── Premium body text ───────────────────────────────────────────────── */
+  .body-premium {
+    @apply font-body leading-[1.8] text-base lg:text-lg;
+  }
+
+  /* ── strong / b global gold treatment ──────────────────────────────── */
+  strong,
+  b {
+    font-weight: 700;
+    color: oklch(0.72 0.18 50);
   }
 
   /* ── Staggered hero text entrance ─────────────────────────────────────── */
@@ -252,6 +266,30 @@
   .hero-text-3 {
     @apply hero-text-stagger;
     animation-delay: 0.4s;
+  }
+
+  /* ── Bidirectional scroll reveal ──────────────────────────────────────────── */
+  .reveal-up {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .reveal-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-up.hidden-up {
+    opacity: 0;
+    transform: translateY(-40px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+  }
+
+  .reveal-up.hidden-down {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
   }
 
   /* ── Scroll reveal ─────────────────────────────────────────────────────── */
@@ -468,7 +506,7 @@
 
   /* ── Premium button states ──────────────────────────────────────────────── */
   .btn-primary {
-    @apply bg-primary text-primary-foreground font-display font-semibold px-6 py-3 rounded-sm transition-smooth;
+    @apply bg-primary text-primary-foreground font-accent font-semibold px-6 py-3 rounded-sm transition-smooth text-base lg:text-lg;
   }
 
   .btn-primary:hover {
@@ -476,7 +514,7 @@
   }
 
   .btn-secondary {
-    @apply bg-card text-foreground border border-accent/30 font-display font-semibold px-6 py-3 rounded-sm transition-smooth;
+    @apply bg-card text-foreground border border-accent/30 font-accent font-semibold px-6 py-3 rounded-sm transition-smooth text-base lg:text-lg;
   }
 
   .btn-secondary:hover {
@@ -492,6 +530,32 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+    }
+  }
+
+  /* ── Ambient background drift ─────────────────────────────────────────── */
+  @keyframes ambient-drift {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 80px 80px;
+    }
+  }
+
+  .ambient-bg {
+    background-image: radial-gradient(
+      circle,
+      oklch(0.93 0.008 60 / 0.04) 1px,
+      transparent 1px
+    );
+    background-size: 80px 80px;
+    animation: ambient-drift 30s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ambient-bg {
+      animation: none;
     }
   }
 }

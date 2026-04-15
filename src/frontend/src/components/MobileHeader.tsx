@@ -93,25 +93,28 @@ export function MobileHeader() {
             }}
           >
             <img
-              src="/assets/generated/profile-avatar.dim_400x400.jpg"
+              src="/assets/profile-studio.jpg"
               alt="Md Abdullah Hosen"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-center"
               onError={(e) => {
                 const t = e.currentTarget as HTMLImageElement;
-                t.style.display = "none";
-                const p = t.parentElement;
-                if (p)
-                  p.style.background =
-                    "linear-gradient(135deg, oklch(0.72 0.18 50 / 0.4), oklch(0.72 0.22 210 / 0.4))";
+                t.src = "/assets/generated/profile-avatar.dim_400x400.jpg";
+                t.onerror = () => {
+                  t.style.display = "none";
+                  const p = t.parentElement;
+                  if (p)
+                    p.style.background =
+                      "linear-gradient(135deg, oklch(0.72 0.18 50 / 0.4), oklch(0.72 0.22 210 / 0.4))";
+                };
               }}
             />
           </div>
           <div className="min-w-0">
-            <span className="font-display font-semibold text-sm text-foreground block truncate leading-tight">
+            <span className="font-display font-semibold text-sm text-foreground block truncate leading-tight tracking-tight">
               Md Abdullah Hosen
             </span>
             <span
-              className="font-mono text-[10px] block truncate"
+              className="font-accent text-xs block truncate"
               style={{ color: "oklch(0.55 0.012 55 / 0.85)" }}
             >
               WP Dev &amp; Frontend Engineer
@@ -275,16 +278,20 @@ export function MobileHeader() {
                     style={{ borderColor: "oklch(0.20 0.016 48)" }}
                   >
                     <img
-                      src="/assets/generated/profile-avatar.dim_400x400.jpg"
+                      src="/assets/profile-studio.jpg"
                       alt="Md Abdullah Hosen"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-center"
                       onError={(e) => {
                         const t = e.currentTarget as HTMLImageElement;
-                        t.style.display = "none";
-                        const p = t.parentElement;
-                        if (p)
-                          p.style.background =
-                            "linear-gradient(135deg, oklch(0.72 0.18 50 / 0.3), oklch(0.72 0.22 210 / 0.3))";
+                        t.src =
+                          "/assets/generated/profile-avatar.dim_400x400.jpg";
+                        t.onerror = () => {
+                          t.style.display = "none";
+                          const p = t.parentElement;
+                          if (p)
+                            p.style.background =
+                              "linear-gradient(135deg, oklch(0.72 0.18 50 / 0.3), oklch(0.72 0.22 210 / 0.3))";
+                        };
                       }}
                     />
                   </div>
@@ -299,17 +306,17 @@ export function MobileHeader() {
                   />
                 </div>
                 <div className="text-center">
-                  <p className="font-display font-bold text-foreground text-sm">
+                  <p className="font-display font-bold text-foreground text-base tracking-tight">
                     Md Abdullah Hosen
                   </p>
                   <p
-                    className="text-[11px] font-mono mt-0.5"
+                    className="text-xs font-accent mt-0.5"
                     style={{ color: "oklch(0.55 0.012 55)" }}
                   >
                     WordPress Dev &amp; Frontend Engineer
                   </p>
                   <p
-                    className="flex items-center justify-center gap-1 text-[11px] font-mono mt-1"
+                    className="flex items-center justify-center gap-1 text-xs font-accent mt-1"
                     style={{ color: "oklch(0.55 0.012 55 / 0.65)" }}
                   >
                     <MapPin size={9} style={{ color: "oklch(0.72 0.18 50)" }} />
@@ -333,7 +340,7 @@ export function MobileHeader() {
                       onClick={() => handleNav(link.id)}
                       data-ocid={`mobile-nav-${link.id}`}
                       aria-current={isActive ? "page" : undefined}
-                      className={`text-left px-4 py-3 rounded-lg font-display text-[13px] font-medium transition-smooth flex items-center gap-3 relative overflow-hidden ${
+                      className={`text-left px-4 py-3 rounded-lg font-accent text-sm font-medium transition-smooth flex items-center gap-3 relative overflow-hidden ${
                         isActive
                           ? "text-foreground"
                           : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
@@ -395,7 +402,7 @@ export function MobileHeader() {
                       animation: "badge-pulse 2.2s ease-in-out infinite",
                     }}
                   />
-                  <span className="text-[11px] font-mono text-primary tracking-wide">
+                  <span className="text-xs font-accent text-primary tracking-wide">
                     Available for hire
                   </span>
                 </div>

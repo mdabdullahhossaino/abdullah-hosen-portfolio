@@ -368,12 +368,12 @@ function PortfolioModal({
             <div className="flex items-start justify-between gap-3 mb-5">
               <div className="min-w-0">
                 <div
-                  className="text-[10px] font-mono uppercase tracking-widest mb-1"
+                  className="text-xs font-accent uppercase tracking-widest mb-1"
                   style={{ color: style.accentColor }}
                 >
                   Case Study · #{num}
                 </div>
-                <h3 className="font-display font-bold text-xl text-foreground leading-snug">
+                <h3 className="font-display font-bold text-xl lg:text-2xl text-foreground leading-snug tracking-tight">
                   {project.title}
                 </h3>
               </div>
@@ -389,7 +389,7 @@ function PortfolioModal({
               {paragraphs.map((para, i) => (
                 <div key={`para-${i}-${para.slice(0, 12)}`}>
                   {/* Paragraph */}
-                  <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                  <p className="text-muted-foreground text-sm lg:text-base leading-[1.75] mb-4 font-body">
                     {para}
                   </p>
 
@@ -613,11 +613,11 @@ function PortfolioCard({
 
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-2">
-          <h3 className="font-display font-semibold text-sm text-foreground leading-snug min-w-0 truncate">
+          <h3 className="font-display font-semibold text-base lg:text-lg text-foreground leading-snug min-w-0 truncate tracking-tight">
             {project.title}
           </h3>
           <span
-            className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0"
+            className="text-[10px] lg:text-xs font-accent uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0"
             style={{
               color: style.accentColor,
               borderColor: `${style.accentColor}44`,
@@ -626,7 +626,7 @@ function PortfolioCard({
             {project.category}
           </span>
         </div>
-        <p className="text-muted-foreground text-xs leading-relaxed line-clamp-2">
+        <p className="text-muted-foreground text-sm lg:text-base leading-relaxed line-clamp-2">
           {project.description}
         </p>
       </div>
@@ -665,92 +665,94 @@ export function Portfolio() {
       className="section-pad border-b border-border/30"
       data-ocid="section-portfolio"
     >
-      <div ref={headingRef} className="reveal-fade-up mb-10">
-        <span className="inline-block px-3 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent text-[11px] font-mono uppercase tracking-widest mb-3">
-          My Work
-        </span>
-        <h2 className="section-heading text-foreground">Portfolio</h2>
-        <p className="section-subheading">
-          A selection of my best projects across specializations
-        </p>
-      </div>
-
-      {/* Filter tabs */}
-      <div
-        ref={filtersRef}
-        className="reveal-fade-up flex flex-wrap gap-2 mb-10"
-        data-ocid="portfolio-filters"
-      >
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setActive(f)}
-            data-ocid={`filter-${f.toLowerCase().replace(/\s+/g, "-")}`}
-            className={[
-              "px-4 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider transition-smooth border",
-              active === f
-                ? "bg-primary border-primary text-background shadow-gold-glow"
-                : "bg-card border-border/40 text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-foreground",
-            ].join(" ")}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-
-      {/* Grid */}
-      {showSkeleton ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {["sk-a", "sk-b", "sk-c", "sk-d", "sk-e", "sk-f"].map((k) => (
-            <SkeletonCard key={k} />
-          ))}
+      <div className="max-w-6xl mx-auto">
+        <div ref={headingRef} className="reveal-fade-up mb-10">
+          <span className="inline-block px-3 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent text-xs lg:text-sm font-accent font-semibold uppercase tracking-widest mb-3">
+            My Work
+          </span>
+          <h2 className="section-heading text-foreground">Portfolio</h2>
+          <p className="section-subheading">
+            A selection of my best projects across specializations
+          </p>
         </div>
-      ) : filtered.length === 0 ? (
+
+        {/* Filter tabs */}
         <div
-          className="flex flex-col items-center justify-center text-center py-20 rounded-2xl border border-border/30"
-          style={{ background: "oklch(0.12 0.014 48)" }}
-          data-ocid="portfolio-empty"
+          ref={filtersRef}
+          className="reveal-fade-up flex flex-wrap gap-2 mb-10"
+          data-ocid="portfolio-filters"
         >
-          <span className="text-4xl mb-4">🚀</span>
-          <p className="font-display font-semibold text-foreground mb-2">
-            {active === "All"
-              ? "Projects Coming Soon"
-              : `No ${active} projects yet`}
-          </p>
-          <p className="text-muted-foreground text-sm max-w-xs">
-            {active === "All"
-              ? "New projects are being added via the admin panel."
-              : `Switch to 'All' to see other categories or check back soon.`}
-          </p>
-          {active !== "All" && (
+          {FILTERS.map((f) => (
             <button
+              key={f}
               type="button"
-              onClick={() => setActive("All")}
-              className="mt-5 px-4 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider border border-primary/40 text-primary hover:bg-primary/10 transition-smooth"
-              data-ocid="portfolio-empty-reset"
+              onClick={() => setActive(f)}
+              data-ocid={`filter-${f.toLowerCase().replace(/\s+/g, "-")}`}
+              className={[
+                "px-4 py-1.5 rounded-full font-accent text-sm lg:text-base uppercase tracking-wider transition-smooth border",
+                active === f
+                  ? "bg-primary border-primary text-background shadow-gold-glow"
+                  : "bg-card border-border/40 text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-foreground",
+              ].join(" ")}
             >
-              Show All
+              {f}
             </button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((project, i) => (
-            <PortfolioCard
-              key={String(project.id)}
-              project={project}
-              delay={i * 80}
-              visible={true}
-              onOpen={setModal}
-            />
           ))}
         </div>
-      )}
 
-      {modal && (
-        <PortfolioModal project={modal} onClose={() => setModal(null)} />
-      )}
+        {/* Grid */}
+        {showSkeleton ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {["sk-a", "sk-b", "sk-c", "sk-d", "sk-e", "sk-f"].map((k) => (
+              <SkeletonCard key={k} />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div
+            className="flex flex-col items-center justify-center text-center py-20 rounded-2xl border border-border/30"
+            style={{ background: "oklch(0.12 0.014 48)" }}
+            data-ocid="portfolio-empty"
+          >
+            <span className="text-4xl mb-4">🚀</span>
+            <p className="font-display font-semibold text-lg lg:text-xl text-foreground mb-2 tracking-tight">
+              {active === "All"
+                ? "Projects Coming Soon"
+                : `No ${active} projects yet`}
+            </p>
+            <p className="text-muted-foreground text-sm lg:text-base max-w-xs">
+              {active === "All"
+                ? "New projects are being added via the admin panel."
+                : `Switch to 'All' to see other categories or check back soon.`}
+            </p>
+            {active !== "All" && (
+              <button
+                type="button"
+                onClick={() => setActive("All")}
+                className="mt-5 px-4 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider border border-primary/40 text-primary hover:bg-primary/10 transition-smooth"
+                data-ocid="portfolio-empty-reset"
+              >
+                Show All
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((project, i) => (
+              <PortfolioCard
+                key={String(project.id)}
+                project={project}
+                delay={i * 80}
+                visible={true}
+                onOpen={setModal}
+              />
+            ))}
+          </div>
+        )}
+
+        {modal && (
+          <PortfolioModal project={modal} onClose={() => setModal(null)} />
+        )}
+      </div>
     </section>
   );
 }

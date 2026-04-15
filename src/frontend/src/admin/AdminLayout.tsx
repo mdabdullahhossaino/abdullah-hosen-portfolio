@@ -71,12 +71,12 @@ export function AdminLayout() {
             </div>
             <div>
               <p
-                className="font-display font-bold text-sm leading-none mb-0.5"
+                className="font-display font-bold text-sm lg:text-base leading-none mb-0.5 tracking-tight"
                 style={{ color: "oklch(0.72 0.18 50)" }}
               >
                 Admin Panel
               </p>
-              <p className="text-[10px] font-mono text-muted-foreground">
+              <p className="text-xs font-accent text-muted-foreground">
                 Abdullah Hosen
               </p>
             </div>
@@ -96,7 +96,7 @@ export function AdminLayout() {
                 key={href}
                 type="button"
                 onClick={() => navigate({ to: href })}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-mono transition-all duration-200 w-full text-left"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm lg:text-base font-accent transition-all duration-200 w-full text-left"
                 style={{
                   background: active
                     ? "oklch(0.72 0.18 50 / 0.15)"
@@ -138,7 +138,7 @@ export function AdminLayout() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-mono w-full transition-all duration-200"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm lg:text-base font-accent w-full transition-all duration-200"
             style={{ color: "oklch(0.55 0.22 25)" }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.background =
