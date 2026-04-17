@@ -1,9 +1,8 @@
-import { createActor } from "@/backend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useActor } from "@caffeineai/core-infrastructure";
+import { submitContact as saveContact } from "@/services/staticService";
 import {
   Bot,
   BugOff,
@@ -173,8 +172,6 @@ export function Contact() {
   const leftReveal = useReveal();
   const rightReveal = useReveal();
 
-  const { actor, isFetching } = useActor(createActor);
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [service, setService] = useState("");
@@ -314,13 +311,15 @@ export function Contact() {
     const finalSubject = `[${service}] ${subject.trim()}`;
 
     try {
-      if (!actor || isFetching) throw new Error("Not connected");
-      await actor.submitContact(
+      // Save directly to localStorage via staticService — works on any hosting
+      await saveContact(
         name.trim(),
         email.trim(),
         finalSubject,
         message.trim(),
+        service,
       );
+
       setSubmittedName(sentName);
       setSuccess(true);
       setCheckAnimated(false);
@@ -597,7 +596,7 @@ export function Contact() {
                     color: "oklch(0.93 0.008 60)",
                   }}
                 >
-                  Message Sent!
+                  আপনার মেসেজ পাঠানো হয়েছে!
                 </h3>
                 <p
                   className="text-sm max-w-xs mb-1"
@@ -619,10 +618,10 @@ export function Contact() {
                     transition: "opacity 0.5s ease 0.6s",
                   }}
                 >
-                  Thanks{submittedName ? `, ${submittedName}` : ""}! Your
-                  message has been received. I&apos;ll get back to you within{" "}
-                  <span style={{ color: "oklch(0.72 0.18 50)" }}>24 hours</span>
-                  .
+                  আপনার মেসেজ সফলভাবে পাঠানো হয়েছে!
+                  {submittedName ? ` ধন্যবাদ, ${submittedName}!` : ""} আমি{" "}
+                  <span style={{ color: "oklch(0.72 0.18 50)" }}>২৪ ঘণ্টার</span>{" "}
+                  মধ্যে যোগাযোগ করব।
                 </p>
                 <Button
                   variant="outline"
@@ -904,7 +903,7 @@ export function Contact() {
                   </div>
                 </div>
 
-                {/* Backend error */}
+                {/* Error state */}
                 {submitError && (
                   <div
                     className="px-4 py-3 rounded-xl text-sm font-mono"
@@ -923,7 +922,7 @@ export function Contact() {
                 {/* Submit */}
                 <Button
                   type="submit"
-                  disabled={loading || !isValid || isFetching}
+                  disabled={loading || !isValid}
                   className="w-full font-accent font-semibold tracking-wide gap-2 h-12 rounded-xl transition-smooth disabled:opacity-40 text-base lg:text-lg"
                   style={
                     isValid && !loading

@@ -1,7 +1,6 @@
-import { createActor } from "@/backend";
-import type { DashboardStats } from "@/backend.d";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useActor } from "@caffeineai/core-infrastructure";
+import type { DashboardStats } from "@/services/staticService";
+import { getDashboardStats } from "@/services/staticService";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart2, FolderOpen, TrendingUp, Users } from "lucide-react";
 import {
@@ -141,15 +140,11 @@ function StatCard({ label, value, icon: Icon, accent }: StatCardProps) {
 // ── Main component ─────────────────────────────────────────────────────────
 export function AdminDashboard() {
   const token = localStorage.getItem("admin_token") ?? "";
-  const { actor, isFetching: actorLoading } = useActor(createActor);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats", token],
-    queryFn: async () => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.getDashboardStats(token);
-    },
-    enabled: !!actor && !actorLoading && !!token,
+    queryFn: () => getDashboardStats(token),
+    enabled: !!token,
     refetchInterval: 30_000,
   });
 

@@ -1,6 +1,5 @@
-import { createActor } from "@/backend";
-import type { Project } from "@/backend.d";
-import { useActor } from "@caffeineai/core-infrastructure";
+import type { Project } from "@/services/staticService";
+import { getProjects } from "@/services/staticService";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
@@ -644,20 +643,15 @@ export function Portfolio() {
   useRevealItem(headingRef as React.RefObject<Element>, 0);
   useRevealItem(filtersRef as React.RefObject<Element>, 120);
 
-  const { actor, isFetching } = useActor(createActor);
   const { data: projects, isLoading } = useQuery<Project[]>({
     queryKey: ["projects"],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getProjects();
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: () => getProjects(),
   });
 
   const items = projects ?? [];
   const filtered =
     active === "All" ? items : items.filter((p) => p.category === active);
-  const showSkeleton = isLoading || isFetching;
+  const showSkeleton = isLoading;
 
   return (
     <section

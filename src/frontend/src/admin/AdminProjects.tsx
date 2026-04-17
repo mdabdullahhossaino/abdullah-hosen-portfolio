@@ -1,5 +1,3 @@
-import { createActor } from "@/backend";
-import type { Project } from "@/backend.d";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +18,13 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { useActor } from "@caffeineai/core-infrastructure";
+import type { Project } from "@/services/staticService";
+import {
+  createProject,
+  deleteProject,
+  getProjects,
+  updateProject,
+} from "@/services/staticService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -78,9 +82,7 @@ function exportProjectsToExcel(projects: Project[]) {
     Category: p.category,
     Description: p.description,
     "Image URLs": p.imageUrls.join(";"),
-    "Created Date": new Date(Number(p.createdAt) / 1_000_000)
-      .toISOString()
-      .split("T")[0],
+    "Created Date": new Date(p.createdAt).toISOString().split("T")[0],
   }));
 
   const ws = XLSX.utils.json_to_sheet(rows);
@@ -369,11 +371,11 @@ function ProjectModal({
 }: {
   open: boolean;
   onClose: () => void;
-  initial: ProjectFormState & { id?: bigint };
-  onSave: (data: ProjectFormState & { id?: bigint }) => void;
+  initial: ProjectFormState & { id?: number };
+  onSave: (data: ProjectFormState & { id?: number }) => void;
   saving: boolean;
 }) {
-  const [form, setForm] = useState<ProjectFormState & { id?: bigint }>(initial);
+  const [form, setForm] = useState<ProjectFormState & { id?: number }>(initial);
 
   function set<K extends keyof ProjectFormState>(
     key: K,
@@ -576,14 +578,13 @@ function ImportProgress({
 // ── Main component ─────────────────────────────────────────────────────────
 export function AdminProjects() {
   const token = localStorage.getItem("admin_token") ?? "";
-  const { actor, isFetching: actorLoading } = useActor(createActor);
   const qc = useQueryClient();
 
   const importFileRef = useRef<HTMLInputElement>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<
-    (ProjectFormState & { id?: bigint }) | null
+    (ProjectFormState & { id?: number }) | null
   >(null);
 
   // Delete confirm state
@@ -598,24 +599,18 @@ export function AdminProjects() {
 
   const { data: projects = [], isLoading } = useQuery<Project[]>({
     queryKey: ["projects"],
-    queryFn: async () => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.getProjects();
-    },
-    enabled: !!actor && !actorLoading,
+    queryFn: () => getProjects(),
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: ProjectFormState) => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.createProject(
+    mutationFn: async (data: ProjectFormState) =>
+      createProject(
         token,
         data.title,
         data.description,
         data.category,
         data.imageUrls,
-      );
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["projects"] });
       toast.success("Project created successfully");
@@ -625,17 +620,15 @@ export function AdminProjects() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: ProjectFormState & { id: bigint }) => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.updateProject(
+    mutationFn: async (data: ProjectFormState & { id: number }) =>
+      updateProject(
         token,
         data.id,
         data.title,
         data.description,
         data.category,
         data.imageUrls,
-      );
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["projects"] });
       toast.success("Project updated successfully");
@@ -645,10 +638,7 @@ export function AdminProjects() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: bigint) => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.deleteProject(token, id);
-    },
+    mutationFn: async (id: number) => deleteProject(token, id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["projects"] });
       toast.success("Project deleted");
@@ -673,7 +663,7 @@ export function AdminProjects() {
     });
   }
 
-  async function handleSave(data: ProjectFormState & { id?: bigint }) {
+  async function handleSave(data: ProjectFormState & { id?: number }) {
     if (data.id !== undefined) {
       await updateMutation.mutateAsync({ ...data, id: data.id });
     } else {
@@ -707,7 +697,7 @@ export function AdminProjects() {
     const file = e.target.files?.[0];
     // Reset input so same file can be re-imported
     e.target.value = "";
-    if (!file || !actor) return;
+    if (!file) return;
 
     let rows: Record<string, string>[] = [];
 
@@ -755,13 +745,7 @@ export function AdminProjects() {
         : [];
 
       try {
-        await actor.createProject(
-          token,
-          title,
-          description,
-          category,
-          imageUrls,
-        );
+        await createProject(token, title, description, category, imageUrls);
         imported++;
       } catch {
         // skip failed rows
@@ -830,7 +814,7 @@ export function AdminProjects() {
               background: "oklch(0.72 0.22 210 / 0.07)",
             }}
             onClick={() => importFileRef.current?.click()}
-            disabled={!!importProgress || actorLoading}
+            disabled={!!importProgress}
             data-ocid="btn-import-excel"
           >
             {importProgress ? (

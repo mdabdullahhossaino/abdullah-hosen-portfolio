@@ -1,11 +1,9 @@
-import { createActor } from "@/backend";
-import { useActor } from "@caffeineai/core-infrastructure";
+import { adminLogin } from "@/services/staticService";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAdmin } from "./AdminContext";
 
 export function AdminLogin() {
-  const { actor, isFetching } = useActor(createActor);
   const { login } = useAdmin();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
@@ -16,11 +14,10 @@ export function AdminLogin() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!actor || isFetching) return;
     setError(null);
     setLoading(true);
     try {
-      const result = await actor.adminLogin(username, password);
+      const result = await adminLogin(username, password);
       if (result.__kind__ === "ok") {
         login(result.ok);
         navigate({ to: "/ridoy/dashboard" });
@@ -186,7 +183,7 @@ export function AdminLogin() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={loading || isFetching}
+            disabled={loading}
             className="w-full py-3 rounded-xl font-display font-semibold text-sm transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{
               background:

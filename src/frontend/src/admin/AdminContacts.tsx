@@ -1,5 +1,3 @@
-import { createActor } from "@/backend";
-import type { ContactSubmission } from "@/backend.d";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useActor } from "@caffeineai/core-infrastructure";
+import type { ContactSubmission } from "@/services/staticService";
+import { deleteContact, getContacts } from "@/services/staticService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Download,
@@ -26,9 +25,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-function formatDate(ts: bigint) {
-  const ms = Number(ts) / 1_000_000;
-  const d = new Date(ms);
+function formatDate(ts: number) {
+  const d = new Date(ts);
   return d.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -96,11 +94,11 @@ function ContactRow({
   contact: ContactSubmission;
   isRead: boolean;
   onMarkRead: (id: string) => void;
-  onDelete: (id: bigint) => void;
+  onDelete: (id: number) => void;
   isDeleting: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
   const idStr = String(contact.id);
 
   function toggle() {
@@ -110,18 +108,18 @@ function ContactRow({
 
   function handleDeleteClick(e: React.MouseEvent) {
     e.stopPropagation();
-    setConfirmDelete(true);
+    setConfirmDel(true);
   }
 
   function handleConfirmDelete(e: React.MouseEvent) {
     e.stopPropagation();
     onDelete(contact.id);
-    setConfirmDelete(false);
+    setConfirmDel(false);
   }
 
   function handleCancelDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    setConfirmDelete(false);
+    setConfirmDel(false);
   }
 
   return (
@@ -196,7 +194,7 @@ function ContactRow({
               <Reply size={14} />
             </Button>
 
-            {confirmDelete ? (
+            {confirmDel ? (
               <div
                 className="flex items-center gap-1.5 rounded-lg px-2 py-1 border"
                 style={{
@@ -276,7 +274,6 @@ function ContactRow({
 // ── Main component ─────────────────────────────────────────────────────────
 export function AdminContacts() {
   const token = localStorage.getItem("admin_token") ?? "";
-  const { actor, isFetching: actorLoading } = useActor(createActor);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [readIds, setReadIds] = useState<Set<string>>(getReadIds);
@@ -288,19 +285,13 @@ export function AdminContacts() {
     refetch,
   } = useQuery<ContactSubmission[]>({
     queryKey: ["contacts", token],
-    queryFn: async () => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.getContacts(token);
-    },
-    enabled: !!actor && !actorLoading && !!token,
+    queryFn: () => getContacts(token),
+    enabled: !!token,
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: bigint) => {
-      if (!actor) throw new Error("Actor not ready");
-      return actor.deleteContact(token, id);
-    },
-    onMutate: (id: bigint) => {
+    mutationFn: async (id: number) => deleteContact(token, id),
+    onMutate: (id: number) => {
       const idStr = String(id);
       setDeletingIds((prev) => new Set([...prev, idStr]));
       // Optimistic update — remove row immediately
@@ -309,7 +300,7 @@ export function AdminContacts() {
         (old) => (old ?? []).filter((c) => String(c.id) !== idStr),
       );
     },
-    onSettled: (_data, _error, id: bigint) => {
+    onSettled: (_data, _error, id: number) => {
       const idStr = String(id);
       setDeletingIds((prev) => {
         const next = new Set(prev);
