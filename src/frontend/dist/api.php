@@ -18,9 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // --- Database Configuration ---
 define('DB_HOST', 'sdb-84.hosting.stackcp.net');
-define('DB_NAME', 'abdullah-hosen-35303936c10');
-define('DB_USER', 'abdullah-hosen-35303936c10');
-define('DB_PASS', '2nyq8n1kmo');
+define('DB_NAME', 'md-abdullah-hosen-35303936a114');
+define('DB_USER', 'md-abdullah-hosen-35303936a114');
+define('DB_PASS', 'md-abdullah-hosen-35303');
 
 // --- Admin Credentials (fallback if admins table is empty) ---
 define('ADMIN_USERNAME', 'ridoy');
@@ -32,13 +32,14 @@ define('ADMIN_PASSWORD_HASH', password_hash('Ridoy@2024', PASSWORD_BCRYPT));
 function getDB(): PDO {
     static $pdo = null;
     if ($pdo === null) {
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+        // Hardcode DSN to avoid any variable-scope issues with constants inside functions
+        $dsn = "mysql:host=sdb-84.hosting.stackcp.net;dbname=md-abdullah-hosen-35303936a114;charset=utf8mb4";
         $options = [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
         ];
-        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+        $pdo = new PDO($dsn, 'md-abdullah-hosen-35303936a114', 'md-abdullah-hosen-35303', $options);
     }
     return $pdo;
 }

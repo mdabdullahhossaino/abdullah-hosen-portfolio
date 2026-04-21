@@ -14,6 +14,7 @@ process.env.STORAGE_GATEWAY_URL =
 
 export default defineConfig({
   logLevel: "error",
+  base: process.env.VITE_BASE_PATH || "/",
   build: {
     emptyOutDir: true,
     sourcemap: false,

@@ -13,12 +13,6 @@ if (!isset($_GET['key']) || $_GET['key'] !== $secretKey) {
     exit();
 }
 
-// --- Database Configuration ---
-define('DB_HOST', 'sdb-84.hosting.stackcp.net');
-define('DB_NAME', 'abdullah-hosen-35303936c10');
-define('DB_USER', 'abdullah-hosen-35303936c10');
-define('DB_PASS', '2nyq8n1kmo');
-
 $results = [];
 
 function runSQL(PDO $pdo, string $label, string $sql): array {
@@ -31,8 +25,9 @@ function runSQL(PDO $pdo, string $label, string $sql): array {
 }
 
 try {
-    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-    $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+    // Hardcoded DSN — avoids any variable/constant scope issues on shared hosting
+    $dsn = "mysql:host=sdb-84.hosting.stackcp.net;dbname=md-abdullah-hosen-35303936a114;charset=utf8mb4";
+    $pdo = new PDO($dsn, 'md-abdullah-hosen-35303936a114', 'md-abdullah-hosen-35303', [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
