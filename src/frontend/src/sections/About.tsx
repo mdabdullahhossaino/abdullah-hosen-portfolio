@@ -184,16 +184,18 @@ export function About() {
                 }}
                 aria-hidden="true"
               />
-              {/* Image container — significantly enlarged */}
+              {/* Image container — significantly enlarged, no overflow-hidden on parent */}
               <div
-                className="relative w-full overflow-hidden rounded-2xl profile-card"
+                className="relative overflow-visible rounded-2xl profile-card"
                 style={{
-                  width: "clamp(280px, 40vw, 420px)",
+                  width: "clamp(260px, 40vw, 420px)",
+                  maxWidth: "90vw",
                   aspectRatio: "4/5",
                   background: "oklch(0.13 0.016 48)",
                   border: "1px solid oklch(0.28 0.018 48 / 0.5)",
                   boxShadow:
                     "0 24px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px oklch(0.72 0.18 50 / 0.15)",
+                  overflow: "hidden",
                 }}
               >
                 <img

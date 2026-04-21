@@ -275,10 +275,10 @@ export function ConfettiCelebration() {
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const c = canvas.getContext("2d")!;
-    if (!c) return;
-    // c is guaranteed non-null for all closures below
+    const ctxRaw = canvas.getContext("2d");
+    if (!ctxRaw) return;
+    // Assign to a const typed as non-null so TypeScript is happy inside closures
+    const c: CanvasRenderingContext2D = ctxRaw;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;

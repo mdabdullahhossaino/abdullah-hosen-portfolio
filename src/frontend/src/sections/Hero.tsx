@@ -51,7 +51,11 @@ export function ParticleCanvas() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    // Explicit null guard — getContext can return null on some environments
+    if (!ctx) {
+      console.error("[ParticleCanvas] Failed to get 2D context");
+      return;
+    }
 
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -97,7 +101,7 @@ export function ParticleCanvas() {
       isGold: Math.random() > 0.5,
     }));
 
-    // Mouse interaction
+    // Mouse interaction — listen on the PARENT container (not the canvas itself)
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
@@ -113,18 +117,16 @@ export function ParticleCanvas() {
 
     const handleClick = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
-      clickRef.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-        time: Date.now(),
-      };
-      // Burst particles from click
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      clickRef.current = { x: cx, y: cy, time: Date.now() };
+      // Burst particles from click point
       for (let i = 0; i < 12; i++) {
         const angle = (i / 12) * Math.PI * 2;
         const speed = Math.random() * 4 + 2;
         particles.push({
-          x: clickRef.current.x,
-          y: clickRef.current.y,
+          x: cx,
+          y: cy,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           origVx: 0,
@@ -150,37 +152,37 @@ export function ParticleCanvas() {
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     function drawHexagon(
-      ctx: CanvasRenderingContext2D,
+      c: CanvasRenderingContext2D,
       cx: number,
       cy: number,
       r: number,
     ) {
-      ctx.beginPath();
+      c.beginPath();
       for (let i = 0; i < 6; i++) {
         const angle = (i * Math.PI) / 3;
         const px = cx + r * Math.cos(angle);
         const py = cy + r * Math.sin(angle);
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
+        if (i === 0) c.moveTo(px, py);
+        else c.lineTo(px, py);
       }
-      ctx.closePath();
+      c.closePath();
     }
 
     function drawTriangle(
-      ctx: CanvasRenderingContext2D,
+      c: CanvasRenderingContext2D,
       cx: number,
       cy: number,
       r: number,
     ) {
-      ctx.beginPath();
+      c.beginPath();
       for (let i = 0; i < 3; i++) {
         const angle = (i * 2 * Math.PI) / 3 - Math.PI / 2;
         const px = cx + r * Math.cos(angle);
         const py = cy + r * Math.sin(angle);
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
+        if (i === 0) c.moveTo(px, py);
+        else c.lineTo(px, py);
       }
-      ctx.closePath();
+      c.closePath();
     }
 
     const draw = () => {
@@ -419,24 +421,31 @@ const SERVICES_CAROUSEL = [
 function ServiceCarousel() {
   const [active, setActive] = useState(0);
   const [phase, setPhase] = useState<"enter" | "visible" | "exit">("enter");
+  const activeRef = useRef(0);
 
-  // Auto-rotate with setInterval (no stale deps needed)
+  // Keep ref in sync with state to use in timeout callbacks without stale closure
   useEffect(() => {
-    const id = setInterval(() => {
-      setActive((prev) => {
-        const next = (prev + 1) % SERVICES_CAROUSEL.length;
-        setPhase("exit");
-        setTimeout(() => {
-          setActive(next);
-          setPhase("enter");
-          setTimeout(() => setPhase("visible"), 50);
-        }, 350);
-        return prev; // hold current during exit phase
-      });
-    }, 3000);
+    activeRef.current = active;
+  }, [active]);
+
+  useEffect(() => {
     // Trigger initial enter
-    setTimeout(() => setPhase("visible"), 50);
-    return () => clearInterval(id);
+    const initTimer = setTimeout(() => setPhase("visible"), 50);
+
+    const id = setInterval(() => {
+      setPhase("exit");
+      setTimeout(() => {
+        const next = (activeRef.current + 1) % SERVICES_CAROUSEL.length;
+        setActive(next);
+        setPhase("enter");
+        setTimeout(() => setPhase("visible"), 50);
+      }, 350);
+    }, 3000);
+
+    return () => {
+      clearInterval(id);
+      clearTimeout(initTimer);
+    };
   }, []);
 
   const svc = SERVICES_CAROUSEL[active];
@@ -737,8 +746,8 @@ export function Hero() {
         }}
       />
 
-      {/* Hero content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-3xl mx-auto pt-28 md:pt-20 lg:pt-0">
+      {/* Hero content — extra top padding on mobile to avoid header overlap */}
+      <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-3xl mx-auto pt-24 md:pt-20 lg:pt-0">
         <GlowingAvatar />
 
         {/* Available badge */}

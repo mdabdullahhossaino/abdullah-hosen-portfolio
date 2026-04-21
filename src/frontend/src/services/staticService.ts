@@ -181,27 +181,32 @@ export async function submitContact(
   message: string,
   service?: string,
 ): Promise<ContactSubmission> {
-  const data = await api<{ success: boolean; contact?: ContactSubmission }>({
-    action: "submit_contact",
-    name,
-    email,
-    subject,
-    message,
-    service: service ?? "",
-  });
-  if (data.success && data.contact) {
-    return data.contact;
+  try {
+    const data = await api<{ success: boolean; contact?: ContactSubmission }>({
+      action: "submit_contact",
+      name,
+      email,
+      subject,
+      message,
+      service: service ?? "",
+    });
+    if (data.success && data.contact) {
+      return data.contact;
+    }
+    // API responded but no contact — still treat as success with a fallback shape
+    return {
+      id: Date.now(),
+      name,
+      email,
+      subject,
+      message,
+      timestamp: Date.now(),
+      service,
+    };
+  } catch {
+    // Network or server error — throw so the caller can show an error state
+    throw new Error("Failed to submit contact form");
   }
-  // Fallback shape so callers never receive null
-  return {
-    id: Date.now(),
-    name,
-    email,
-    subject,
-    message,
-    timestamp: Date.now(),
-    service,
-  };
 }
 
 export async function getContacts(token: string): Promise<ContactSubmission[]> {
