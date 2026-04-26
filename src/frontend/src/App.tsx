@@ -105,7 +105,9 @@ const routeTree = rootRoute.addChildren([
 
 // basepath allows deploying to a subdirectory (e.g. /md-abdullah-hosen/).
 // Set VITE_BASE_PATH env var at build time to activate (e.g. /md-abdullah-hosen/).
-const basepath = (import.meta.env.VITE_BASE_PATH as string | undefined) ?? "/";
+const basepath =
+  (import.meta.env.VITE_BASE_PATH as string | undefined) ??
+  "/md-abdullah-hosen";
 const router = createRouter({ routeTree, basepath });
 
 declare module "@tanstack/react-router" {

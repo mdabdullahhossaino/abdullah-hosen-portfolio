@@ -2,7 +2,7 @@
 // All function signatures are identical to the previous localStorage version.
 // Only the admin session token is kept in localStorage (not actual data).
 
-const API_BASE = "/api.php";
+const API_BASE = "/md-abdullah-hosen/api.php";
 
 // ── Storage key for session token only ───────────────────────────────────────
 const TOKEN_KEY = "admin_token";
@@ -84,7 +84,9 @@ export async function validateToken(token: string): Promise<boolean> {
       action: "validate_token",
       token,
     });
-    return data.success && data.valid === true;
+    // api.php returns {success: true, valid: true/false}
+    // A valid token means success=true AND valid=true
+    return data.success === true && data.valid === true;
   } catch {
     return false;
   }
@@ -109,6 +111,39 @@ export async function getProject(id: number): Promise<Project | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Upload a single image file to the server.
+ * Returns the permanent web-accessible URL (e.g. /md-abdullah-hosen/uploads/xxx.jpg).
+ * Throws on failure so the caller can show an error and allow retry.
+ */
+export async function uploadProjectImage(file: File): Promise<string> {
+  const token = localStorage.getItem(TOKEN_KEY) ?? "";
+  const formData = new FormData();
+  formData.append("image", file);
+  formData.append("token", token);
+
+  const res = await fetch(`${API_BASE}?action=upload_image`, {
+    method: "POST",
+    body: formData,
+    // Do NOT set Content-Type — browser sets multipart boundary automatically
+  });
+
+  if (!res.ok) {
+    throw new Error(`Upload failed with HTTP ${res.status}`);
+  }
+
+  const data = (await res.json()) as {
+    success: boolean;
+    url?: string;
+    error?: string;
+  };
+  if (!data.success || !data.url) {
+    throw new Error(data.error ?? "Upload failed — no URL returned");
+  }
+
+  return data.url;
 }
 
 export async function createProject(

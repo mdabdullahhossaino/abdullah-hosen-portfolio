@@ -1,0 +1,42 @@
+// Version: 1.0.0
+type ContactId__479742040 = Nat;
+type ContactSubmission__93684224 =
+  {
+    email : Text;
+    id : ContactId__479742040;
+    message : Text;
+    name : Text;
+    subject : Text;
+    timestamp : Timestamp__301639476
+  };
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type ProjectId__478417951 = Nat;
+type Project__720644384 =
+  {
+    category : Text;
+    createdAt : Timestamp__301639476;
+    description : Text;
+    id : ProjectId__478417951;
+    imageUrls : [Text];
+    title : Text
+  };
+type SessionToken__701769829 = Text;
+type Timestamp__301639476 = Int;
+actor {
+  stable var activeToken : {var value : SessionToken__701769829};
+  stable contacts :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?ContactSubmission__93684224]];
+      var elementIndex : Nat__490723111
+    };
+  stable var nextContactId : {var value : Nat};
+  stable var nextProjectId : {var value : Nat};
+  stable projects :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?Project__720644384]];
+      var elementIndex : Nat__490723111
+    }
+};

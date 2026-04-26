@@ -24,9 +24,11 @@ import {
   deleteProject,
   getProjects,
   updateProject,
+  uploadProjectImage,
 } from "@/services/staticService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertCircle,
   AlertTriangle,
   Download,
   Edit2,
@@ -34,6 +36,7 @@ import {
   ImageIcon,
   Loader2,
   Plus,
+  RefreshCw,
   Trash2,
   Upload,
   X,
@@ -74,6 +77,12 @@ const CATEGORY_COLORS: Record<string, string> = {
   AI: "oklch(0.70 0.20 300)",
 };
 
+// Represents a slot in the image list — either uploading, failed, or done
+type ImageSlot =
+  | { status: "uploading"; file: File; localUrl: string }
+  | { status: "error"; file: File; localUrl: string; message: string }
+  | { status: "done"; url: string };
+
 // ── Excel export helper ────────────────────────────────────────────────────
 function exportProjectsToExcel(projects: Project[]) {
   const rows = projects.map((p) => ({
@@ -86,8 +95,6 @@ function exportProjectsToExcel(projects: Project[]) {
   }));
 
   const ws = XLSX.utils.json_to_sheet(rows);
-
-  // Column widths
   ws["!cols"] = [
     { wch: 20 },
     { wch: 40 },
@@ -104,30 +111,118 @@ function exportProjectsToExcel(projects: Project[]) {
   XLSX.writeFile(wb, `projects-export-${today}.xlsx`);
 }
 
-// ── Image upload input ─────────────────────────────────────────────────────
+// ── Image upload area (with per-image server upload + loading states) ──────
 function ImageUploadArea({
-  images,
-  onAdd,
-  onRemove,
-  uploading,
+  slots,
+  onSlotsChange,
 }: {
-  images: string[];
-  onAdd: (url: string) => void;
-  onRemove: (idx: number) => void;
-  uploading: boolean;
+  slots: ImageSlot[];
+  onSlotsChange: (
+    next: ImageSlot[] | ((prev: ImageSlot[]) => ImageSlot[]),
+  ) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [localUploading, setLocalUploading] = useState(false);
 
   async function handleFiles(files: FileList | null) {
-    if (!files) return;
-    setLocalUploading(true);
-    for (const file of Array.from(files)) {
-      const url = URL.createObjectURL(file);
-      onAdd(url);
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+
+    // Build uploading slots immediately — user sees local previews right away
+    const newSlots: ImageSlot[] = fileArray.map((f) => ({
+      status: "uploading",
+      file: f,
+      localUrl: URL.createObjectURL(f),
+    }));
+
+    // Capture start index before state update
+    let startIndex = 0;
+    onSlotsChange((prev) => {
+      startIndex = prev.length;
+      return [...prev, ...newSlots];
+    });
+
+    // Upload each file and update its slot when done
+    for (let i = 0; i < fileArray.length; i++) {
+      const slotIndex = startIndex + i;
+      try {
+        const url = await uploadProjectImage(fileArray[i]);
+        onSlotsChange((prev) => {
+          const next = [...prev];
+          const old = next[slotIndex];
+          if (old && (old.status === "uploading" || old.status === "error")) {
+            URL.revokeObjectURL(old.localUrl);
+          }
+          next[slotIndex] = { status: "done", url };
+          return next;
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Upload failed";
+        onSlotsChange((prev) => {
+          const next = [...prev];
+          const old = next[slotIndex];
+          if (old && old.status === "uploading") {
+            next[slotIndex] = {
+              status: "error",
+              file: old.file,
+              localUrl: old.localUrl,
+              message: msg,
+            };
+          }
+          return next;
+        });
+      }
     }
-    setLocalUploading(false);
   }
+
+  async function retrySlot(
+    idx: number,
+    slot: Extract<ImageSlot, { status: "error" }>,
+  ) {
+    const file = slot.file;
+    onSlotsChange((prev) => {
+      const next = [...prev];
+      next[idx] = { status: "uploading", file, localUrl: slot.localUrl };
+      return next;
+    });
+
+    try {
+      const url = await uploadProjectImage(file);
+      onSlotsChange((prev) => {
+        const next = [...prev];
+        const old = next[idx];
+        if (old && (old.status === "uploading" || old.status === "error")) {
+          URL.revokeObjectURL(old.localUrl);
+        }
+        next[idx] = { status: "done", url };
+        return next;
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      onSlotsChange((prev) => {
+        const next = [...prev];
+        next[idx] = {
+          status: "error",
+          file,
+          localUrl: slot.localUrl,
+          message: msg,
+        };
+        return next;
+      });
+    }
+  }
+
+  function removeSlot(idx: number) {
+    onSlotsChange((prev) => {
+      const slot = prev[idx];
+      if (slot && (slot.status === "uploading" || slot.status === "error")) {
+        URL.revokeObjectURL(slot.localUrl);
+      }
+      return prev.filter((_, i) => i !== idx);
+    });
+  }
+
+  const hasUploading = slots.some((s) => s.status === "uploading");
 
   return (
     <div className="space-y-3">
@@ -139,52 +234,117 @@ function ImageUploadArea({
         aria-label="Upload project visuals"
         data-ocid="image-upload-area"
       >
-        <ImageIcon size={28} style={{ color: "oklch(0.50 0.010 55)" }} />
+        {hasUploading ? (
+          <Loader2
+            size={28}
+            className="animate-spin"
+            style={{ color: "oklch(0.72 0.18 50)" }}
+          />
+        ) : (
+          <ImageIcon size={28} style={{ color: "oklch(0.50 0.010 55)" }} />
+        )}
         <p className="text-sm text-muted-foreground">
-          {localUploading || uploading
-            ? "Uploading…"
-            : "Click to upload images"}
+          {hasUploading ? "Uploading to server…" : "Click to upload images"}
         </p>
         <p
           className="text-[10px] font-mono"
           style={{ color: "oklch(0.40 0.008 55)" }}
         >
-          PNG, JPG, WEBP supported
+          PNG, JPG, WEBP · max 5 MB · saved permanently to server
         </p>
       </button>
+
       <input
         ref={fileRef}
         type="file"
         accept="image/*"
         multiple
         className="hidden"
-        onChange={(e) => handleFiles(e.target.files)}
+        onChange={(e) => {
+          handleFiles(e.target.files);
+          e.target.value = "";
+        }}
         data-ocid="input-image-files"
       />
-      {images.length > 0 && (
+
+      {slots.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {images.map((url, idx) => (
-            <div
-              key={`img-${idx}-${url.slice(-8)}`}
-              className="relative group w-20 h-20 rounded-xl overflow-hidden border"
-              style={{ borderColor: "oklch(0.28 0.018 48)" }}
-            >
-              <img
-                src={url}
-                alt={`Project preview ${idx + 1}`}
-                className="w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-smooth"
-                style={{ background: "oklch(0.05 0.010 48 / 0.7)" }}
-                onClick={() => onRemove(idx)}
-                aria-label="Remove image"
+          {slots.map((slot, idx) => {
+            const previewSrc =
+              slot.status === "done" ? slot.url : slot.localUrl;
+            const stableKey =
+              slot.status === "done"
+                ? `done-${slot.url}`
+                : `${slot.status}-${slot.localUrl}`;
+
+            return (
+              <div
+                key={stableKey}
+                className="relative group w-20 h-20 rounded-xl overflow-hidden border"
+                style={{ borderColor: "oklch(0.28 0.018 48)" }}
               >
-                <X size={18} style={{ color: "oklch(0.65 0.22 25)" }} />
-              </button>
-            </div>
-          ))}
+                <img
+                  src={previewSrc}
+                  alt={`Project preview ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                />
+
+                {/* Uploading overlay */}
+                {slot.status === "uploading" && (
+                  <div
+                    className="absolute inset-0 flex items-center justify-center"
+                    style={{ background: "oklch(0.05 0.010 48 / 0.72)" }}
+                  >
+                    <Loader2
+                      size={20}
+                      className="animate-spin"
+                      style={{ color: "oklch(0.72 0.18 50)" }}
+                    />
+                  </div>
+                )}
+
+                {/* Error overlay */}
+                {slot.status === "error" && (
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-1"
+                    style={{ background: "oklch(0.05 0.010 48 / 0.85)" }}
+                    title={slot.message}
+                  >
+                    <AlertCircle
+                      size={14}
+                      style={{ color: "oklch(0.65 0.22 25)" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => retrySlot(idx, slot)}
+                      className="rounded text-[9px] px-1.5 py-0.5 font-mono flex items-center gap-1"
+                      style={{
+                        background: "oklch(0.72 0.18 50 / 0.25)",
+                        color: "oklch(0.72 0.18 50)",
+                      }}
+                      aria-label="Retry upload"
+                    >
+                      <RefreshCw size={8} />
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+                {/* Remove button — shown on hover when not uploading */}
+                {slot.status !== "uploading" && (
+                  <button
+                    type="button"
+                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-smooth rounded-full p-0.5"
+                    style={{ background: "oklch(0.05 0.010 48 / 0.8)" }}
+                    onClick={() => removeSlot(idx)}
+                    aria-label="Remove image"
+                  >
+                    <X size={12} style={{ color: "oklch(0.65 0.22 25)" }} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -361,6 +521,19 @@ function ProjectCard({
   );
 }
 
+// ── Helpers: convert between string[] and ImageSlot[] ─────────────────────
+function slotsToUrls(slots: ImageSlot[]): string[] {
+  return slots
+    .filter(
+      (s): s is Extract<ImageSlot, { status: "done" }> => s.status === "done",
+    )
+    .map((s) => s.url);
+}
+
+function urlsToSlots(urls: string[]): ImageSlot[] {
+  return urls.map((url) => ({ status: "done" as const, url }));
+}
+
 // ── Project form modal ─────────────────────────────────────────────────────
 function ProjectModal({
   open,
@@ -375,9 +548,21 @@ function ProjectModal({
   onSave: (data: ProjectFormState & { id?: number }) => void;
   saving: boolean;
 }) {
-  const [form, setForm] = useState<ProjectFormState & { id?: number }>(initial);
+  const [form, setForm] = useState<{
+    id?: number;
+    title: string;
+    description: string;
+    category: Category;
+    slots: ImageSlot[];
+  }>(() => ({
+    id: initial.id,
+    title: initial.title,
+    description: initial.description,
+    category: initial.category,
+    slots: urlsToSlots(initial.imageUrls),
+  }));
 
-  function set<K extends keyof ProjectFormState>(
+  function set<K extends "title" | "description" | "category">(
     key: K,
     val: ProjectFormState[K],
   ) {
@@ -385,7 +570,22 @@ function ProjectModal({
   }
 
   const isEdit = !!initial.id;
-  const valid = form.title.trim() && form.description.trim() && form.category;
+  const hasUploading = form.slots.some((s) => s.status === "uploading");
+  const valid =
+    form.title.trim() &&
+    form.description.trim() &&
+    form.category &&
+    !hasUploading;
+
+  function handleSave() {
+    onSave({
+      id: form.id,
+      title: form.title,
+      description: form.description,
+      category: form.category,
+      imageUrls: slotsToUrls(form.slots),
+    });
+  }
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -474,17 +674,23 @@ function ProjectModal({
           <div className="space-y-1.5">
             <Label className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">
               Images
+              {hasUploading && (
+                <span
+                  className="ml-2 normal-case tracking-normal font-normal"
+                  style={{ color: "oklch(0.72 0.18 50)" }}
+                >
+                  — uploading, please wait…
+                </span>
+              )}
             </Label>
             <ImageUploadArea
-              images={form.imageUrls}
-              onAdd={(url) => set("imageUrls", [...form.imageUrls, url])}
-              onRemove={(idx) =>
-                set(
-                  "imageUrls",
-                  form.imageUrls.filter((_, i) => i !== idx),
-                )
+              slots={form.slots}
+              onSlotsChange={(next) =>
+                setForm((p) => ({
+                  ...p,
+                  slots: typeof next === "function" ? next(p.slots) : next,
+                }))
               }
-              uploading={false}
             />
           </div>
 
@@ -501,8 +707,11 @@ function ProjectModal({
             </Button>
             <Button
               className="flex-1 font-display gap-2"
-              onClick={() => onSave(form)}
+              onClick={handleSave}
               disabled={!valid || saving}
+              title={
+                hasUploading ? "Wait for images to finish uploading" : undefined
+              }
               style={
                 valid && !saving
                   ? {
@@ -514,7 +723,9 @@ function ProjectModal({
               }
               data-ocid="btn-save-project"
             >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : null}
+              {saving || hasUploading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : null}
               {isEdit ? "Save Changes" : "Add Project"}
             </Button>
           </div>
@@ -587,11 +798,9 @@ export function AdminProjects() {
     (ProjectFormState & { id?: number }) | null
   >(null);
 
-  // Delete confirm state
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-  // Import state
   const [importProgress, setImportProgress] = useState<{
     current: number;
     total: number;
@@ -682,7 +891,6 @@ export function AdminProjects() {
     }
   }
 
-  // ── Excel export ───────────────────────────────────────────────────────
   function handleExport() {
     if (projects.length === 0) {
       toast.info("No projects to export");
@@ -692,10 +900,8 @@ export function AdminProjects() {
     toast.success(`Exported ${projects.length} projects to Excel`);
   }
 
-  // ── Excel import ───────────────────────────────────────────────────────
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    // Reset input so same file can be re-imported
     e.target.value = "";
     if (!file) return;
 
@@ -716,7 +922,6 @@ export function AdminProjects() {
       return;
     }
 
-    // Filter valid rows
     const valid = rows.filter(
       (r) => (r.Title ?? "").trim() && (r.Category ?? "").trim(),
     );
@@ -737,11 +942,12 @@ export function AdminProjects() {
       const category = (r.Category ?? "WordPress").trim();
       const description = (r.Description ?? "").trim();
       const rawUrls = (r["Image URLs"] ?? "").trim();
+      // Only import server-side paths — skip any leftover blob: URLs
       const imageUrls = rawUrls
         ? rawUrls
             .split(";")
             .map((u) => u.trim())
-            .filter(Boolean)
+            .filter((u) => u && !u.startsWith("blob:"))
         : [];
 
       try {
@@ -783,9 +989,7 @@ export function AdminProjects() {
           </p>
         </div>
 
-        {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {/* Export Excel */}
           <Button
             variant="outline"
             size="sm"
@@ -803,7 +1007,6 @@ export function AdminProjects() {
             Export Excel
           </Button>
 
-          {/* Import Excel */}
           <Button
             variant="outline"
             size="sm"
@@ -833,7 +1036,6 @@ export function AdminProjects() {
             data-ocid="input-import-file"
           />
 
-          {/* Add Project */}
           <Button
             onClick={openCreate}
             size="sm"
@@ -852,7 +1054,6 @@ export function AdminProjects() {
         </div>
       </div>
 
-      {/* Import progress */}
       {importProgress && (
         <ImportProgress
           current={importProgress.current}
@@ -860,7 +1061,6 @@ export function AdminProjects() {
         />
       )}
 
-      {/* Grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {(["a", "b", "c", "d", "e", "f"] as const).map((k) => (
@@ -926,7 +1126,6 @@ export function AdminProjects() {
         </div>
       )}
 
-      {/* Create / Edit modal */}
       {(modalOpen || editing !== null) && (
         <ProjectModal
           open={modalOpen || editing !== null}
@@ -940,7 +1139,6 @@ export function AdminProjects() {
         />
       )}
 
-      {/* Delete confirm dialog */}
       <DeleteConfirmDialog
         open={confirmDeleteOpen}
         projectTitle={deleteTarget?.title ?? ""}

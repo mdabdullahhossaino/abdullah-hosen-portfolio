@@ -5,10 +5,9 @@
 // ============================================================
 
 // --- CORS Headers ---
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Content-Type: application/json");
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 // Handle OPTIONS preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -16,32 +15,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// --- Database Configuration ---
-define('DB_HOST', 'sdb-84.hosting.stackcp.net');
-define('DB_NAME', 'md-abdullah-hosen-35303936a114');
-define('DB_USER', 'md-abdullah-hosen-35303936a114');
-define('DB_PASS', 'md-abdullah-hosen-35303');
-
-// --- Admin Credentials (fallback if admins table is empty) ---
-define('ADMIN_USERNAME', 'ridoy');
-define('ADMIN_PASSWORD_HASH', password_hash('Ridoy@2024', PASSWORD_BCRYPT));
-
 // ============================================================
-// Helper: Database Connection (PDO singleton)
+// Helper: Database Connection
+// CRITICAL: All variables defined INSIDE the function to avoid
+// PHP scope bugs on shared/CGI hosting. port=3306 is explicit.
 // ============================================================
 function getDB(): PDO {
-    static $pdo = null;
-    if ($pdo === null) {
-        // Hardcode DSN to avoid any variable-scope issues with constants inside functions
-        $dsn = "mysql:host=sdb-84.hosting.stackcp.net;dbname=md-abdullah-hosen-35303936a114;charset=utf8mb4";
-        $options = [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
-        ];
-        $pdo = new PDO($dsn, 'md-abdullah-hosen-35303936a114', 'md-abdullah-hosen-35303', $options);
+    $host     = 'sdb-84.hosting.stackcp.net';
+    $dbname   = 'md-abdullah-hosen-35303936a114';
+    $username = 'md-abdullah-hosen-35303936a114';
+    $password = 'md-abdullah-hosen-35303';
+    $charset  = 'utf8mb4';
+
+    $dsn = "mysql:host={$host};port=3306;dbname={$dbname};charset={$charset}";
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4",
+    ];
+
+    try {
+        return new PDO($dsn, $username, $password, $options);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => 'Database connection failed: ' . $e->getMessage()]);
+        exit();
     }
-    return $pdo;
 }
 
 // ============================================================
@@ -61,23 +62,118 @@ function validateToken(PDO $pdo, ?string $token): bool {
 // ============================================================
 function respond(array $data, int $status = 200): void {
     http_response_code($status);
+    header('Content-Type: application/json');
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit();
 }
 
 // ============================================================
-// Main Request Handler
+// Determine action — supports both GET param and JSON body
 // ============================================================
-try {
-    $raw  = file_get_contents("php://input");
-    $data = json_decode($raw, true);
+$requestAction = $_GET['action'] ?? $_POST['action'] ?? null;
 
-    if (!is_array($data) || empty($data['action'])) {
-        respond(['success' => false, 'error' => 'Missing or invalid action'], 400);
+// ============================================================
+// FILE UPLOAD HANDLER
+// Multipart requests cannot be read via php://input — handle first
+// ============================================================
+if ($requestAction === 'upload_image') {
+    header('Content-Type: application/json');
+
+    $token = $_POST['token'] ?? $_GET['token'] ?? '';
+    try {
+        $pdo = getDB();
+        if (!validateToken($pdo, $token)) {
+            respond(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+    } catch (Throwable $e) {
+        respond(['success' => false, 'error' => 'Database error: ' . $e->getMessage()], 500);
     }
 
-    $pdo    = getDB();
-    $action = $data['action'];
+    if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+        $errCode = $_FILES['image']['error'] ?? 'no_file';
+        respond(['success' => false, 'error' => 'No file received or upload error: ' . $errCode], 400);
+    }
+
+    $file = $_FILES['image'];
+
+    // 5 MB limit
+    if ($file['size'] > 5 * 1024 * 1024) {
+        respond(['success' => false, 'error' => 'File size exceeds 5 MB limit'], 400);
+    }
+
+    // Validate MIME type via finfo
+    $allowedMime = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+
+    if (!in_array($mimeType, $allowedMime, true)) {
+        respond(['success' => false, 'error' => 'Invalid file type. Only JPG, PNG, GIF, WEBP allowed.'], 400);
+    }
+
+    $extMap = [
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/gif'  => 'gif',
+        'image/webp' => 'webp',
+    ];
+    $ext = $extMap[$mimeType] ?? 'jpg';
+
+    // Ensure uploads/ directory exists
+    $uploadsDir = __DIR__ . '/uploads';
+    if (!is_dir($uploadsDir)) {
+        mkdir($uploadsDir, 0755, true);
+        file_put_contents(
+            $uploadsDir . '/.htaccess',
+            "Options -ExecCGI\nAddHandler cgi-script .php .pl .py .jsp .asp .htm .shtml\nOptions -Indexes\n"
+        );
+    }
+
+    $filename = time() . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
+    $destPath = $uploadsDir . '/' . $filename;
+
+    if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+        respond(['success' => false, 'error' => 'Failed to save file to disk'], 500);
+    }
+
+    $url = '/md-abdullah-hosen/uploads/' . $filename;
+    respond(['success' => true, 'url' => $url]);
+}
+
+// ============================================================
+// All other actions — parse JSON body or fall back to GET params
+// ============================================================
+header('Content-Type: application/json');
+
+// Determine action from JSON body, GET param, or POST param
+$data   = [];
+$action = null;
+
+$raw = file_get_contents('php://input');
+if (!empty($raw)) {
+    $decoded = json_decode($raw, true);
+    if (is_array($decoded)) {
+        $data   = $decoded;
+        $action = $data['action'] ?? null;
+    }
+}
+
+// Fallback: action via GET/POST (for simple GET requests like get_projects)
+if (empty($action)) {
+    $action = $requestAction;
+}
+
+if (empty($action)) {
+    respond(['success' => false, 'error' => 'Missing action parameter'], 400);
+}
+
+// Token helper — check JSON body first, then GET/POST
+function getToken(array $data): string {
+    return $data['token'] ?? $_GET['token'] ?? $_POST['token'] ?? '';
+}
+
+try {
+    $pdo = getDB();
 
     switch ($action) {
 
@@ -94,20 +190,23 @@ try {
 
             $authenticated = false;
 
-            // Check admins table first
-            $stmt = $pdo->prepare("SELECT password_hash FROM admins WHERE username = ? LIMIT 1");
-            $stmt->execute([$username]);
-            $row = $stmt->fetch();
+            // Try DB lookup first
+            try {
+                $stmt = $pdo->prepare("SELECT password_hash FROM admins WHERE username = ? LIMIT 1");
+                $stmt->execute([$username]);
+                $row = $stmt->fetch();
 
-            if ($row) {
-                $authenticated = password_verify($password, $row['password_hash']);
-            } else {
-                // Fallback: hardcoded credentials
-                if ($username === ADMIN_USERNAME && password_verify($password, ADMIN_PASSWORD_HASH)) {
-                    $authenticated = true;
+                if ($row) {
+                    $authenticated = password_verify($password, $row['password_hash']);
+                } else {
+                    // Fallback hardcoded credentials (before setup_database.php runs)
+                    if ($username === 'ridoy' && $password === 'Ridoy@2024') {
+                        $authenticated = true;
+                    }
                 }
-                // Also allow plain comparison for 'Ridoy@2024' in case hash was not seeded
-                if (!$authenticated && $username === ADMIN_USERNAME && $password === 'Ridoy@2024') {
+            } catch (Throwable $e) {
+                // If admins table doesn't exist yet, fall back to hardcoded
+                if ($username === 'ridoy' && $password === 'Ridoy@2024') {
                     $authenticated = true;
                 }
             }
@@ -116,52 +215,79 @@ try {
                 respond(['success' => false, 'error' => 'Invalid username or password'], 401);
             }
 
-            // Generate token
             $token     = bin2hex(random_bytes(32));
             $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
 
-            $stmt = $pdo->prepare(
-                "INSERT INTO admin_sessions (token, expires_at) VALUES (?, ?)"
-            );
-            $stmt->execute([$token, $expiresAt]);
+            try {
+                $stmt = $pdo->prepare(
+                    "INSERT INTO admin_sessions (token, username, expires_at) VALUES (?, ?, ?)"
+                );
+                $stmt->execute([$token, $username, $expiresAt]);
+            } catch (Throwable $e) {
+                // If admin_sessions table doesn't exist yet, try without username column
+                try {
+                    $stmt = $pdo->prepare(
+                        "INSERT INTO admin_sessions (token, expires_at) VALUES (?, ?)"
+                    );
+                    $stmt->execute([$token, $expiresAt]);
+                } catch (Throwable $e2) {
+                    // Session storage failed — still return token (stateless fallback)
+                }
+            }
 
             respond(['success' => true, 'token' => $token]);
         }
 
         // --------------------------------------------------------
         // VALIDATE TOKEN
+        // Returns: {success: true, valid: true} if valid
+        //          {success: true, valid: false} if invalid/expired
         // --------------------------------------------------------
         case 'validate_token': {
-            $token = $data['token'] ?? '';
-            respond(['success' => validateToken($pdo, $token)]);
+            $token = getToken($data);
+            $valid = validateToken($pdo, $token);
+            respond(['success' => true, 'valid' => $valid]);
         }
 
         // --------------------------------------------------------
         // LOGOUT
         // --------------------------------------------------------
         case 'logout': {
-            $token = $data['token'] ?? '';
+            $token = getToken($data);
             if (!empty($token)) {
-                $stmt = $pdo->prepare("DELETE FROM admin_sessions WHERE token = ?");
-                $stmt->execute([$token]);
+                try {
+                    $stmt = $pdo->prepare("DELETE FROM admin_sessions WHERE token = ?");
+                    $stmt->execute([$token]);
+                } catch (Throwable $e) {
+                    // ignore
+                }
             }
             respond(['success' => true]);
         }
 
         // --------------------------------------------------------
-        // GET PROJECTS (public)
+        // GET PROJECTS (public — no auth required)
+        // Images are stored as JSON array of permanent server URLs.
+        // These never expire because they are real file paths.
         // --------------------------------------------------------
         case 'get_projects': {
             $stmt = $pdo->query(
-                "SELECT id, title, description, category, image_urls, created_at FROM projects ORDER BY created_at DESC"
+                "SELECT id, title, description, category, image_urls, created_at
+                 FROM projects
+                 ORDER BY created_at DESC"
             );
             $rows = $stmt->fetchAll();
 
             $projects = array_map(function ($row) {
                 $imageUrls = [];
                 if (!empty($row['image_urls'])) {
-                    $decoded = json_decode($row['image_urls'], true);
-                    $imageUrls = is_array($decoded) ? $decoded : [];
+                    $decoded   = json_decode($row['image_urls'], true);
+                    // Filter out any blob: URLs that may have been saved accidentally
+                    if (is_array($decoded)) {
+                        $imageUrls = array_values(array_filter($decoded, function($url) {
+                            return !empty($url) && strpos($url, 'blob:') !== 0;
+                        }));
+                    }
                 }
                 return [
                     'id'          => (int)$row['id'],
@@ -178,9 +304,10 @@ try {
 
         // --------------------------------------------------------
         // CREATE PROJECT (auth required)
+        // imageUrls must be permanent server paths — blob: URLs are rejected
         // --------------------------------------------------------
         case 'create_project': {
-            $token = $data['token'] ?? '';
+            $token = getToken($data);
             if (!validateToken($pdo, $token)) {
                 respond(['success' => false, 'error' => 'Unauthorized'], 401);
             }
@@ -188,7 +315,12 @@ try {
             $title       = trim($data['title'] ?? '');
             $description = trim($data['description'] ?? '');
             $category    = trim($data['category'] ?? '');
-            $imageUrls   = is_array($data['imageUrls'] ?? null) ? $data['imageUrls'] : [];
+            $rawUrls     = is_array($data['imageUrls'] ?? null) ? $data['imageUrls'] : [];
+
+            // Reject blob: URLs — only permanent server paths allowed
+            $imageUrls = array_values(array_filter($rawUrls, function($url) {
+                return !empty($url) && strpos($url, 'blob:') !== 0;
+            }));
 
             if (empty($title)) {
                 respond(['success' => false, 'error' => 'Project title is required'], 400);
@@ -201,7 +333,6 @@ try {
             $stmt->execute([$title, $description, $category, $imageUrlsJson]);
             $newId = (int)$pdo->lastInsertId();
 
-            // Fetch the created row
             $stmt = $pdo->prepare("SELECT created_at FROM projects WHERE id = ?");
             $stmt->execute([$newId]);
             $created = $stmt->fetch();
@@ -221,9 +352,10 @@ try {
 
         // --------------------------------------------------------
         // UPDATE PROJECT (auth required)
+        // imageUrls must be permanent server paths — blob: URLs are rejected
         // --------------------------------------------------------
         case 'update_project': {
-            $token = $data['token'] ?? '';
+            $token = getToken($data);
             if (!validateToken($pdo, $token)) {
                 respond(['success' => false, 'error' => 'Unauthorized'], 401);
             }
@@ -232,7 +364,12 @@ try {
             $title       = trim($data['title'] ?? '');
             $description = trim($data['description'] ?? '');
             $category    = trim($data['category'] ?? '');
-            $imageUrls   = is_array($data['imageUrls'] ?? null) ? $data['imageUrls'] : [];
+            $rawUrls     = is_array($data['imageUrls'] ?? null) ? $data['imageUrls'] : [];
+
+            // Reject blob: URLs — only permanent server paths allowed
+            $imageUrls = array_values(array_filter($rawUrls, function($url) {
+                return !empty($url) && strpos($url, 'blob:') !== 0;
+            }));
 
             if ($id <= 0 || empty($title)) {
                 respond(['success' => false, 'error' => 'Valid project id and title required'], 400);
@@ -251,7 +388,7 @@ try {
         // DELETE PROJECT (auth required)
         // --------------------------------------------------------
         case 'delete_project': {
-            $token = $data['token'] ?? '';
+            $token = getToken($data);
             if (!validateToken($pdo, $token)) {
                 respond(['success' => false, 'error' => 'Unauthorized'], 401);
             }
@@ -268,7 +405,9 @@ try {
         }
 
         // --------------------------------------------------------
-        // SUBMIT CONTACT (public)
+        // SUBMIT CONTACT (public — no auth required)
+        // Completely independent from project image storage.
+        // Submitting a contact form CANNOT affect project images.
         // --------------------------------------------------------
         case 'submit_contact': {
             $name    = trim($data['name'] ?? '');
@@ -313,13 +452,15 @@ try {
         // GET CONTACTS (auth required)
         // --------------------------------------------------------
         case 'get_contacts': {
-            $token = $data['token'] ?? '';
+            $token = getToken($data);
             if (!validateToken($pdo, $token)) {
                 respond(['success' => false, 'error' => 'Unauthorized'], 401);
             }
 
             $stmt = $pdo->query(
-                "SELECT id, name, email, subject, message, service, created_at FROM contacts ORDER BY created_at DESC"
+                "SELECT id, name, email, subject, message, service, created_at
+                 FROM contacts
+                 ORDER BY created_at DESC"
             );
             $rows = $stmt->fetchAll();
 
@@ -342,7 +483,7 @@ try {
         // DELETE CONTACT (auth required)
         // --------------------------------------------------------
         case 'delete_contact': {
-            $token = $data['token'] ?? '';
+            $token = getToken($data);
             if (!validateToken($pdo, $token)) {
                 respond(['success' => false, 'error' => 'Unauthorized'], 401);
             }
@@ -362,18 +503,14 @@ try {
         // GET DASHBOARD STATS (auth required)
         // --------------------------------------------------------
         case 'get_dashboard_stats': {
-            $token = $data['token'] ?? '';
+            $token = getToken($data);
             if (!validateToken($pdo, $token)) {
                 respond(['success' => false, 'error' => 'Unauthorized'], 401);
             }
 
-            // Total projects
             $totalProjects = (int)$pdo->query("SELECT COUNT(*) FROM projects")->fetchColumn();
-
-            // Total contacts
             $totalContacts = (int)$pdo->query("SELECT COUNT(*) FROM contacts")->fetchColumn();
 
-            // Contacts per day — last 30 days
             $stmt = $pdo->query(
                 "SELECT DATE(created_at) AS date, COUNT(*) AS count
                  FROM contacts
@@ -385,7 +522,6 @@ try {
                 return ['date' => $row['date'], 'count' => (int)$row['count']];
             }, $stmt->fetchAll());
 
-            // Projects by category
             $stmt = $pdo->query(
                 "SELECT category, COUNT(*) AS count
                  FROM projects
